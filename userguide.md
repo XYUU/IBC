@@ -362,64 +362,192 @@ they may not use these paths. Consult your Linux package instructions for file
 locations.
 
 
-### Password Security
+---
 
-To login to TWS or IB Gateway, IBC needs to know your Interactive
-Brokers username and password. You should very carefully secure your IBKR
-account username and password to prevent unauthorised use by third parties.
-This section gives you guidance on how to achieve this.
+# 🔐 Password & Credential Security
 
-The username and password are given to IBC in one of two ways:
+Interactive Brokers (IBKR) credentials are highly sensitive.  
+IBC requires your username, password, and (optionally) TOTP seed to log in to TWS or IB Gateway.  
+This section explains **how IBC handles these secrets**, and **how you should secure your IBKR account**.
 
-- via the configuration `.ini` file: this is the preferred method because the
-  configuration file can be protected by the operating system
+---
 
-- via the command line parameters when IBC is started: this method is
-  strongly deprecated because command line information associated with a
-  process is easily available outside the process (for example via Task
-  Manager on Windows)
+## 1. How Credentials Are Provided to IBC
 
-#### Protecting the Configuration File
+IBC supports two ways to supply the username and password:
 
-To protect this sensitive information, the configuration file needs to be
-stored in a location where it will not be accessible to other users of the
-computer. The simplest way to achieve this is to store it within your personal
-filestore:
+### **1.1 Configuration File (`.properties`) — Preferred**
+The configuration file is protected by the operating system and is the recommended method.
 
-- on Windows this is your `Documents` folder (which is normally actually
-  located at:
+### **1.2 Command-line Parameters — Strongly Deprecated**
+Passing credentials via command-line arguments is insecure because process command lines can be viewed by other users (e.g., via Task Manager on Windows).
 
-  `C:\Users\<username>\Documents`).
+---
 
-  Note that this folder may also be addressed using environment variables like
-  this:
+## 2. Enhanced Secret Protection (New in This Version)
 
-  `%USERPROFILE%\Documents`
+To prevent credential leakage, this project introduces a **secure keystore-based secret management system**.
 
-- on Unix it is the `/home/<username>` directory.
+### **2.1 One-Time Plaintext Input**
+- During **first-time setup**, you must fill in:
+    - IBKR username
+    - IBKR password
+    - TOTP seed (if applicable)
 
-You are advised to place the file in its own `ibc` folder within this location.
+These values are stored **temporarily** in the `.properties` file.
 
-You should also consider encrypting the folder containing the configuration
-file. This will prevent another user with administrator privileges gaining
-access to the contents: even if they use their administrator privileges to
-give themselves access to the file, its contents will not be decrypted because
-they are not the user that encrypted it.
+### **2.2 Automatic Migration to Keystore**
+After the **first successful startup**:
 
-To encrypt the folder on Windows (note that this requires a Professional or
-higher edition of Windows - the home edition does not provide this
-facility):
+- All sensitive fields are **removed** from the `.properties` file
+- The secrets are securely stored in a **Java Keystore (`.jks`)** container
+- The original plaintext configuration file is **not preserved** — you must back it up yourself if needed
 
-- right click the folder and select `Properties`
+### **2.3 Tamper Detection**
+To prevent credential extraction:
 
-- click the `Advanced` button on the `General` tab
+- Any modification to:
+    - the `.properties` file
+    - Java command-line parameters
+    - JVM options
+- will cause IBC to **invalidate the keystore** and refuse to load secrets
 
-- set the checkbox labelled `Encrypt contents to secure data`
+This ensures that secrets cannot be accessed by altering runtime parameters.
 
-- finally, click the `OK` buttons to apply the changes.
+### **2.4 How to Apply Configuration Changes**
+If you need to modify configuration or JVM parameters:
 
-Encrypting a folder on Unix is more involved, and you should refer to the
-documentation for your distribution.
+1. Delete the following files in the configuration directory:
+    - `*.properties`
+    - `*.jks`
+2. Copy your updated **original plaintext** configuration file into the directory
+3. Restart IBC to regenerate the keystore
+
+---
+
+## 3. Protecting the Configuration Directory
+
+Even though secrets are moved to a keystore, the configuration directory still contains sensitive metadata and must be protected.
+
+### **3.1 Recommended Storage Locations**
+
+#### Windows
+Store the configuration directory under your personal Documents folder:
+
+```
+C:\Users\<username>\Documents\ibc[StartIBC.bat](resources%2Fscripts%2FStartIBC.bat)
+```
+
+or using environment variables:
+
+```
+%USERPROFILE%\Documents\ibc
+```
+
+#### Unix/Linux
+Use your home directory:
+
+```
+/home/<username>/ibc
+```
+
+### **3.2 Encrypting the Folder (Highly Recommended)**
+
+#### Windows (Professional Edition or higher)
+1. Right-click the folder → **Properties**
+2. **General** tab → **Advanced**
+3. Enable **Encrypt contents to secure data**
+4. Apply changes
+
+#### Unix/Linux
+Folder encryption varies by distribution.  
+Common options include:
+- eCryptfs
+- fscrypt
+- LUKS-encrypted home directories
+
+Consult your distribution’s documentation.
+
+---
+
+# 🛡️ 4. Additional IBKR Account Security Recommendations
+
+Even with local credential protection, you must harden your IBKR account itself.  
+The following mitigations significantly reduce the impact of credential compromise.
+
+---
+
+## 4.1 Use a Separate Paper Trading Account (Recommended)
+
+For automation, create a **dedicated paper trading account** and store only its credentials.
+
+Benefits:
+- Zero financial risk if compromised
+- Ideal for development, testing, and CI/CD environments
+
+**Reference:**  
+IBKR Paper Trading — [https://www.interactivebrokers.com/lib/cstools/faq/#/content/37128282](https://www.interactivebrokers.com/lib/cstools/faq/#/content/37128282)
+
+---
+
+## 4.2 Use a Dedicated Automation User with Restricted Permissions
+
+IBKR allows creating additional users with granular permissions.
+
+### Steps:
+1. Go to:  
+   **Settings → Account Settings → Users & Access Rights → Users → Add (+)**
+2. Assign a restricted role or customize permissions
+3. Disable all funding-related permissions
+4. Restrict login to your server’s IP address
+
+### Caveats:
+- Individual accounts allow **only two usernames**
+- Some permission changes may require additional verification
+- IP restrictions take effect **next business day**
+
+**References:**
+- Users & Access Rights  
+  [https://www.ibkrguides.com/clientportal/uar/userandaccessrights.htm](https://www.ibkrguides.com/clientportal/uar/userandaccessrights.htm)
+- Adding a User  
+  [https://www.ibkrguides.com/clientportal/uar/addingauser.htm](https://www.ibkrguides.com/clientportal/uar/addingauser.htm)
+- User Roles  
+  [https://www.ibkrguides.com/clientportal/uar/userroles.htm](https://www.ibkrguides.com/clientportal/uar/userroles.htm)
+- Access Rights Definitions  
+  [https://www.ibkrguides.com/clientportal/uar/uardefinitions.htm](https://www.ibkrguides.com/clientportal/uar/uardefinitions.htm)
+
+---
+
+## 4.3 Enable IP Restrictions
+
+Limit access to TWS, IB Gateway, Mobile, and Client Portal to specific IP addresses.
+
+- Non-whitelisted IPs can only perform administrative actions
+- Trading access is blocked
+
+⚠️ **Takes effect the next business day**
+
+**Reference:**  
+[https://www.ibkrguides.com/clientportal/usersettings/iprestrictions.htm](https://www.ibkrguides.com/clientportal/usersettings/iprestrictions.htm)
+
+---
+
+## 4.4 Configure A/B Authorization (Dual Control)
+
+For funding operations, require approval from a separate authorized user.
+
+- Automation user can initiate requests
+- Primary Authorizer must approve them
+
+This prevents unauthorized withdrawals even if credentials are compromised.
+
+**References:**
+- Authorizers  
+  [https://www.ibkrguides.com/clientportal/uar/authorizers.htm](https://www.ibkrguides.com/clientportal/uar/authorizers.htm)
+- Withdrawal Limits  
+  [https://www.ibkrguides.com/clientportal/sls/withdrawallimits.htm](https://www.ibkrguides.com/clientportal/sls/withdrawallimits.htm)
+
+---
 
 ### Configuring IBC
 

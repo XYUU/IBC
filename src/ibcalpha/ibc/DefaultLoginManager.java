@@ -148,12 +148,11 @@ public class DefaultLoginManager extends LoginManager {
     }
 
     private static String getFIXPasswordFromSettings() {
-        String password = Settings.settings().getString("FIXPassword", "");
-        return password;
+        return Settings.settings().getCredential("FIXPassword");
     }
 
     private static String getFIXUserNameFromSettings() {
-        return Settings.settings().getString("FIXLoginId", "");
+        return Settings.settings().getCredential("FIXLoginId");
     }
 
     private boolean getFIXUserNameAndPasswordFromArguments(String[] args) {
@@ -167,12 +166,11 @@ public class DefaultLoginManager extends LoginManager {
     }
 
     private static String getTWSPasswordFromSettings() {
-        String password = Settings.settings().getString("IbPassword", "");
-        return password;
+        return Settings.settings().getCredential("IbPassword");
     }
 
     private static String getTWSUserNameFromSettings() {
-        return Settings.settings().getString("IbLoginId", "");
+        return Settings.settings().getCredential("IbLoginId");
     }
 
     private boolean getTWSUserNameAndPasswordFromArguments(String[] args) {

@@ -85,4 +85,28 @@ public abstract class Settings {
      */
     public abstract String getString(String key, String defaultValue);
 
+    /**
+     * Retrieves the decrypted credential as a primitive byte array.
+     * <p>
+     * <b>CRITICAL SECURITY DIRECTION:</b> Unlike {@link java.lang.String}, byte arrays are mutable
+     * and can be securely overwritten. The calling business logic <b>MUST</b> physically zero out
+     * the returned array in a {@code finally} block immediately after consumption.
+     * </p>
+     *
+     * <pre>{@code
+     * byte[] credential = provider.getCredentialBytes("dbPassword");
+     * try {
+     *     // Use credential bytes here...
+     * } finally {
+     *     if (credential != null) {
+     *         java.util.Arrays.fill(credential, (byte) 0);
+     *     }
+     * }
+     * }</pre>
+     *
+     * @param alias The unique identifier or key name of the required credential.
+     * @return A fresh byte array containing the raw credential value, or {@code null} if the alias is not found.
+     * @throws Exception If the Keystore is uninitialized or the internal cryptographic entry is corrupted.
+     */
+    public abstract String getCredential(String alias);
 }

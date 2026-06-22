@@ -63,5 +63,10 @@ public class MySettings extends ibcalpha.ibc.Settings {
             return defaultValue;
         }
     }
-    
+
+    @Override
+    public String getCredential(String alias) {
+        throw new UnsupportedOperationException("Not implements");
+    }
+
 }

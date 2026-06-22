@@ -21,23 +21,20 @@ package ibcalpha.ibc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 import java.util.Properties;
 
 public class DefaultSettings extends Settings {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultSettings.class);
 
-    private final Properties props = new Properties();
-    private String path;
+    private Properties props;
+
+    private EnhancedSecurityManager manager;
 
     public DefaultSettings() {
-        load(generateDefaultIniPath());
+        load(generateDefaultConfigPath());
     }
 
     public DefaultSettings(String[] args) {
@@ -45,38 +42,17 @@ public class DefaultSettings extends Settings {
     }
 
     private void load(String path) {
-        this.path = path;
-        props.clear();
-        try (InputStream is = new FileInputStream(path)) {
-            props.load(is);
-        } catch (FileNotFoundException e) {
-            logger.error("Properties file {} not found", path);
-        } catch (IOException e) {
-            logger.error("Exception accessing Properties file {}", path, e);
-        }
+        this.manager = new EnhancedSecurityManager(path);
+        this.props = manager.initialize("FIXLoginId", "FIXPassword", "IbLoginId", "IbPassword", "AuthenticatorSecret");
         logger.info("IBC Settings:");
-        Object[] keys = props.stringPropertyNames().toArray();
-        java.util.Arrays.sort(keys);
-        for (Object key : keys) {
-            logger.info("    {}={}", key, getSettingSanitisedValue(key.toString()));
+        List<String> keys = props.stringPropertyNames().stream().sorted().toList();
+        for (String key : keys) {
+            logger.info("    {}={}", key, props.getProperty(key));
         }
         logger.info("End IBC Settings\n");
     }
 
-    private String getSettingSanitisedValue(String key) {
-        String value = props.getProperty(key);
-        if (key.equalsIgnoreCase("FIXLoginId") ||
-                key.equalsIgnoreCase("FIXPassword") ||
-                key.equalsIgnoreCase("IbLoginId") ||
-                key.equalsIgnoreCase("IbPassword")) {
-            if (!value.isEmpty()) {
-                return "***";
-            }
-        }
-        return value;
-    }
-
-    static String generateDefaultIniPath() {
+    static String generateDefaultConfigPath() {
         if (System.getProperty("os.name").startsWith("Windows")) {
             return System.getenv("HOMEDRIVE") +
                     System.getenv("HOMEPATH") + File.separator +
@@ -95,7 +71,7 @@ public class DefaultSettings extends Settings {
         if (args.length == 0 || args[0].equalsIgnoreCase("NULL")) {
             iniPath = getWorkingDirectory() + "config." + getComputerUserName() + ".properties";
         } else if (args[0].length() == 0) {
-            iniPath = generateDefaultIniPath();
+            iniPath = generateDefaultConfigPath();
         } else {// args.length >= 1
             iniPath = args[0];
         }
@@ -130,7 +106,7 @@ public class DefaultSettings extends Settings {
 
     @Override
     public void logDiagnosticMessage() {
-        logger.info("using default settings provider: ini file is {}", path);
+        logger.info("using default settings provider: properties file is {}", manager.getPropertiesPath());
     }
 
     /**
@@ -261,4 +237,7 @@ public class DefaultSettings extends Settings {
         }
     }
 
+    public String getCredential(String alias) {
+        return manager.getCredential(alias);
+    }
 }

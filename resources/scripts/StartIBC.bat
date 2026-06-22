@@ -368,26 +368,6 @@ set JAVA_VM_OPTIONS=%JAVA_VM_OPTIONS% -DjtsConfigDir="%TWS_SETTINGS_PATH%"
 set IBC_SESSION_ID="%RANDOM%%RANDOM%"
 set JAVA_VM_OPTIONS=%JAVA_VM_OPTIONS% -Dibcsessionid=%IBC_SESSION_ID%
 
-rem The TWS/Gateway desktop login renders passkey (WebAuthn) second-factor authentication in
-rem an embedded browser (JxBrowser). The official install4j launcher starts the JVM with
-rem -DjxBrowserKey=<license key>; IBC builds its own java command and so omits it. Without the
-rem key, JxBrowser cannot initialise ("Failed to create browser") and passkey login fails. As
-rem IBKR Securities Japan makes passkey the only login 2FA from 2026-06-30, IBC must pass this
-rem key too. It is embedded in the install and is version-specific, so read it dynamically.
-rem This does NOT bypass 2FA - the user still completes the passkey ceremony.
-set "JXBROWSER_OPT="
-if exist "%INSTALL4J%\i4jparams.conf" (
-	for /f "usebackq delims=" %%L in (`findstr /C:"-DjxBrowserKey=" "%INSTALL4J%\i4jparams.conf"`) do (
-		rem Keep everything after the first -DjxBrowserKey= . In i4jparams.conf the key is
-		rem terminated by a double-quote, so replace that quote with a space and take token 1.
-		set "JXLINE=%%L"
-		set "JXTAIL=!JXLINE:*-DjxBrowserKey=!"
-		set JXTAIL=!JXTAIL:"= !
-		for /f "tokens=1" %%K in ("!JXTAIL!") do set "JXBROWSER_OPT=-DjxBrowserKey=%%K"
-	)
-)
-if defined JXBROWSER_OPT set "JAVA_VM_OPTIONS=%JAVA_VM_OPTIONS% %JXBROWSER_OPT%"
-
 echo Java VM Options=%JAVA_VM_OPTIONS%
 echo.
 
@@ -467,7 +447,7 @@ if exist "%PROGRAM_PATH%\ibgateway.exe" (
 )
 echo.
 
-set moduleAccess=--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-exports=java.base/sun.util=ALL-UNNAMED --add-exports=java.desktop/com.sun.java.swing.plaf.motif=ALL-UNNAMED --add-opens=java.desktop/java.awt=ALL-UNNAMED --add-opens=java.desktop/java.awt.dnd=ALL-UNNAMED --add-opens=java.desktop/javax.swing=ALL-UNNAMED --add-opens=java.desktop/javax.swing.event=ALL-UNNAMED --add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED --add-opens=java.desktop/javax.swing.table=ALL-UNNAMED --add-opens=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.desktop/sun.swing=ALL-UNNAMED --add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmedia=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmedia.events=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmedia.locator=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmediaimpl=ALL-UNNAMED --add-exports=javafx.web/com.sun.javafx.webkit=ALL-UNNAMED --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
+set moduleAccess=--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-exports=java.base/sun.util=ALL-UNNAMED --add-exports=java.desktop/com.sun.java.swing.plaf.motif=ALL-UNNAMED --add-opens=java.desktop/java.awt=ALL-UNNAMED --add-opens=java.desktop/java.awt.dnd=ALL-UNNAMED --add-opens=java.desktop/javax.swing=ALL-UNNAMED --add-opens=java.desktop/javax.swing.event=ALL-UNNAMED --add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED --add-opens=java.desktop/javax.swing.table=ALL-UNNAMED --add-opens=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.desktop/sun.awt.X11=ALL-UNNAMED --add-exports=java.desktop/sun.awt.windows=ALL-UNNAMED --add-exports=java.desktop/sun.lwawt=ALL-UNNAMED --add-exports=java.desktop/sun.swing=ALL-UNNAMED --add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmedia=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmedia.events=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmedia.locator=ALL-UNNAMED --add-exports=javafx.media/com.sun.media.jfxmediaimpl=ALL-UNNAMED --add-exports=javafx.web/com.sun.javafx.webkit=ALL-UNNAMED --add-exports=javafx.web/com.sun.webkit=ALL-UNNAMED --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED -DjxBrowserKey=DFCC36F12F75B7F60B399FC0FC4077DB3385A1D3014181D7063869BAFA234275B5F63A526998E90A2D5A90D31A6FB9F32A5184DC175B8DD80A5165BFEC2F69ABF52C77CD062779AEEC2E4878D6053A6D8FC2EB1A70A9DA0A418AA5D5306995FE5C82AFD3E9395394DC032C77D4013B7EB3D90A5CBBEF347DDF0A5C99D3022375AAD60D4685C4F82A4070BEE90639688CD60B447DB2E02B4079C3ED194F83B7F83367B8E50725589CD4FC
 
 :: temporarily change the current working directory because using "%JAVA_PATH%\java.exe" in the following 'for' statement causes an error
 pushd "%JAVA_PATH%"
@@ -529,18 +509,18 @@ if defined RESTART_NEEDED (
 		del "%TWS_SETTINGS_PATH%\PAUSE%IBC_SESSION_ID%"
 		echo IBC is paused
 	) else (
-		echo IBC will autorestart shortly
-		ping localhost -n 2  >NUL
-		goto :startIBC
-	)
+	echo IBC will autorestart shortly
+	ping localhost -n 2  >NUL
+	goto :startIBC
+)
 ) else (
 
-	echo Check for cold restart
-	if exist "%TWS_SETTINGS_PATH%\COLDRESTART%IBC_SESSION_ID%" (
-		del "%TWS_SETTINGS_PATH%\COLDRESTART%IBC_SESSION_ID%"
-		set AUTORESTART_OPTION=
-		echo IBC will cold-restart shortly
-		goto :startIBC
+echo Check for cold restart
+if exist "%TWS_SETTINGS_PATH%\COLDRESTART%IBC_SESSION_ID%" (
+	del "%TWS_SETTINGS_PATH%\COLDRESTART%IBC_SESSION_ID%"
+	set AUTORESTART_OPTION=
+	echo IBC will cold-restart shortly
+	goto :startIBC
 	)
 )
 

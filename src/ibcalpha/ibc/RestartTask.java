@@ -53,11 +53,11 @@ class RestartTask
 
     RestartTask(final CommandChannel channel,
                 final boolean pauseOnly) {
-        Utils.logToConsole("RestartTask: pauseOnly = " + pauseOnly);
+        logger.info("RestartTask: pauseOnly = {}", pauseOnly);
         mChannel = channel;
         mPauseOnly = pauseOnly;
         mVerb = mPauseOnly ? "PAUSE" : "RESTART";
-        Utils.logToConsole("RestartTask: verb = " + mVerb);
+        logger.info("RestartTask: verb = {}", mVerb);
     }
 
     @Override
@@ -93,7 +93,8 @@ class RestartTask
                  System.getProperty("ibcsessionid"))
                 .createNewFile();
         } catch (java.io.IOException e) {
-            Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, e);
+            logger.error("An exception has occurred", e);
+            IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
         }
     }
 

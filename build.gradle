@@ -36,18 +36,29 @@ tasks.withType(JavaCompile).configureEach {
 
 ext {
     ibHomePath = providers.gradleProperty('ib.home').orElse(providers.environmentVariable('IB_HOME'))
+            .orElse("")
+    def ibHome = ibHomePath.get()
+    if (ibHome) {
+        def configFile = file("${ibHome}/.install4j/i4jparams.conf")
+        if (configFile.exists()) {
+            def config = new XmlSlurper().parse(configFile)
+            def variables = config.compilerVariables.variable
+            javaOptions = variables.find { it.'@name' == 'javaOptions' }?.'@value'?.text() ?: ""
+            sharedJreDir1 = variables.find { it.'@name' == 'sharedJreDir1' }?.'@value'?.text() ?: ""
+            sharedJreDir2 = variables.find { it.'@name' == 'sharedJreDir2' }?.'@value'?.text() ?: ""
+            return
+        }
+    }
 
-    def configFile = file(ibHomePath.orNull).toPath().resolve(".install4j/i4jparams.conf").toFile()
-    def config = new XmlSlurper().parse(configFile)
-    def variables = config.compilerVariables.variable
-
-    javaOptions = variables.find { it.'@name' == 'javaOptions' }?.'@value'?.text()
-    sharedJreDir1 = variables.find { it.'@name' == 'sharedJreDir1' }?.'@value'?.text()
-    sharedJreDir2 = variables.find { it.'@name' == 'sharedJreDir2' }?.'@value'?.text()
+    logger.lifecycle("⚠ Warning: ib.home / IB_HOME not configured. Skipping i4jparams.conf parsing.")
+    javaOptions = ""
+    sharedJreDir1 = ""
+    sharedJreDir2 = ""
+    return
 }
 
 dependencies {
-    def path =  project.ibHomePath.orNull
+    def path = project.ibHomePath.orNull
     if (path?.trim()) {
         implementation fileTree(dir: file(path.trim()), include: '**/*.jar')
     } else {

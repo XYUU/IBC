@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.util.Arrays;
 
 class StopTask
         implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(StopTask.class);
 
     private static final SwitchLock _Running = new SwitchLock();
 
@@ -39,7 +44,7 @@ class StopTask
     @Override
     public void run() {
         if (! _Running.set()) {
-            Utils.logToConsole("STOP already in progress");
+            logger.info("STOP already in progress");
             writeNack("STOP already in progress");
             mChannel.close();
             return;
@@ -51,7 +56,8 @@ class StopTask
             stop(mReason);
         } catch (Exception ex) {
             writeNack(ex.getMessage());
-            Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, ex);
+            logger.error("An exception has occurred", ex);
+            IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
         }
     }
     
@@ -63,7 +69,8 @@ class StopTask
                  System.getProperty("ibcsessionid"))
                 .createNewFile();
         } catch (java.io.IOException e) {
-            Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, e);
+            logger.error("An exception has occurred", e);
+            IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
         }
     }
 
@@ -78,11 +85,11 @@ class StopTask
             if (mChannel != null) mChannel.close();
             if (LoginManager.loginManager().getLoginState() != LoginManager.LoginState.LOGGED_IN) {
                 CommandServer.commandServer().shutdown();
-                Utils.logToConsole("Login has not completed: exiting immediately");
+                logger.info("Login has not completed: exiting immediately");
                 Runtime.getRuntime().halt(0);
             } else {
                 String[] closeMenuPath = SessionManager.isGateway() ? new String[] {"File", "Close"} : new String[] {"File", "Exit"};
-                Utils.logToConsole("Login has completed: exiting via " + Arrays.deepToString(closeMenuPath) + " menu");
+                logger.info("Login has completed: exiting via {} menu", Arrays.deepToString(closeMenuPath));
                 Utils.invokeMenuItem(MainWindowManager.mainWindowManager().getMainWindow(), closeMenuPath);
             }
             

@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -30,6 +33,8 @@ import java.util.List;
 
 class CommandServer
         implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(CommandServer.class);
 
     private ServerSocket mSocket = null;
     private volatile boolean mQuitting = false;
@@ -52,14 +57,14 @@ class CommandServer
 
         final int port = Settings.settings().getInt("CommandServerPort", 0);
         if (port == 0) {
-            Utils.logToConsole("CommandServer is not started because the port is not configured");
+            logger.info("CommandServer is not started because the port is not configured");
             return;
         }
 
-        Utils.logToConsole("CommandServer is starting with port " + port);
+        logger.info("CommandServer is starting with port {}", port);
 
         if (createSocket(port)) {
-            Utils.logToConsole("CommandServer started and is ready to accept commands");
+            logger.info("CommandServer started and is ready to accept commands");
             for (; !mQuitting;) {
                 // this will return null if the shutDown method is called
                 Socket socket = getClient();
@@ -70,17 +75,17 @@ class CommandServer
             }
         }
 
-        Utils.logToConsole("CommandServer is shutdown");
+        logger.info("CommandServer is shutdown");
     }
 
     public void shutdown() {
         mQuitting = true;
         if (mSocket != null) {
             try {
-                Utils.logToConsole("CommandServer closing");
+                logger.info("CommandServer closing");
                 mSocket.close();
             } catch (IOException ex) {
-                Utils.logException(ex);
+                logger.error("An exception has occurred", ex);
             }
             mSocket = null;
         }
@@ -94,25 +99,21 @@ class CommandServer
                 mSocket = new ServerSocket(port,
                                             backlog,
                                             InetAddress.getByName(bindaddr));
-                Utils.logToConsole("CommandServer listening on address: " +
-                                   bindaddr + " port: " +
-                                   java.lang.String.valueOf(port));
+                logger.info("CommandServer listening on address: {} port: {}", bindaddr, java.lang.String.valueOf(port));
             } else {
                 mSocket = new ServerSocket(port, backlog);
-                Utils.logToConsole("CommandServer listening on addresses: " +
-                                   getAddresses() + "; port: " +
-                                   java.lang.String.valueOf(port));
+                logger.info("CommandServer listening on addresses: {}; port: {}", getAddresses(), java.lang.String.valueOf(port));
             }
         } catch (java.net.BindException e) {
-            Utils.logException(e);
-            Utils.logToConsole("CommandServer failed to create socket");
-            Utils.logToConsole("CommandServer cannot process commands");
+            logger.error("An exception has occurred", e);
+            logger.info("CommandServer failed to create socket");
+            logger.info("CommandServer cannot process commands");
             mSocket = null;
             return false;
         } catch (IOException e) {
-            Utils.logException(e);
-            Utils.logToConsole("CommandServer failed to create socket");
-            Utils.logToConsole("CommandServer cannot process commands");
+            logger.error("An exception has occurred", e);
+            logger.info("CommandServer failed to create socket");
+            logger.info("CommandServer cannot process commands");
             mSocket = null;
             return false;
         }
@@ -126,23 +127,22 @@ class CommandServer
             final Socket socket = mSocket.accept();
 
             final String allowedAddresses = Settings.settings().getString("ControlFrom", "");
-            Utils.logToConsole("CommandServer: ControlFrom setting = " + allowedAddresses);
+            logger.info("CommandServer: ControlFrom setting = {}", allowedAddresses);
 
             if (!isPermittedClient(socket, allowedAddresses)) {
-                Utils.logToConsole("CommandServer denied access to: " +
-                                    socket.getInetAddress().toString());
+                logger.info("CommandServer denied access to: {}", socket.getInetAddress().toString());
                 socket.close();
                 return null;
             }
              
-            Utils.logToConsole("CommandServer accepted connection from: " + socket.getInetAddress().toString());
+            logger.info("CommandServer accepted connection from: {}", socket.getInetAddress().toString());
             return socket;
 
         } catch (java.net.SocketException e) {
             // occurs if mSocket is closed during the call to mSocket.accept()
             return null;
         } catch (Exception e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
             return null;
         }
     }
@@ -170,8 +170,8 @@ class CommandServer
                 }
             }
         } catch (SocketException e) {
-            Utils.logToConsole("SocketException occurred while enumerating network interfaces");
-            Utils.logException(e);
+            logger.info("SocketException occurred while enumerating network interfaces");
+            logger.error("An exception has occurred", e);
         }
         return addressList;
     }

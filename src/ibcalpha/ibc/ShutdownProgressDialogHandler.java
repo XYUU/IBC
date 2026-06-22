@@ -41,7 +41,8 @@ public class ShutdownProgressDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Shutdown progress"));
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "ji18n.Language", "Shutdown_progress"));
     }
 
   

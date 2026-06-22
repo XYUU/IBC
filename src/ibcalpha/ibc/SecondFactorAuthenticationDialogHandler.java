@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
@@ -26,14 +29,19 @@ import javax.swing.JList;
 import javax.swing.ListModel;
 
 public class SecondFactorAuthenticationDialogHandler implements WindowHandler {
-    private SecondFactorAuthenticationDialogHandler() {};
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(SecondFactorAuthenticationDialogHandler.class);
+    private SecondFactorAuthenticationDialogHandler() {
+    }
+
+    ;
+
     static SecondFactorAuthenticationDialogHandler _secondFactorAuthenticationDialogHandler = new SecondFactorAuthenticationDialogHandler();
-    
+
     static SecondFactorAuthenticationDialogHandler getInstance() {
         return _secondFactorAuthenticationDialogHandler;
     }
-    
+
     @Override
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
@@ -49,6 +57,7 @@ public class SecondFactorAuthenticationDialogHandler implements WindowHandler {
     @Override
     public void handleWindow(Window window, int eventID) {
         if (eventID == WindowEvent.WINDOW_OPENED) {
+//            logger.info("Second Factor Authentication dialog opened. JLabel texts:{}{}", SwingUtils.NEWLINE, SwingUtils.getLabelTexts(window));
             if (LoginManager.loginManager().readonlyLoginRequired()) {
                 doReadonlyLogin(window);
             } else if (secondFactorDeviceSelectionRequired(window)) {
@@ -68,37 +77,42 @@ public class SecondFactorAuthenticationDialogHandler implements WindowHandler {
     @Override
     public boolean recogniseWindow(Window window) {
         // For TWS this window is a JFrame; for Gateway it is a JDialog
-        if (! (window instanceof JDialog || window instanceof JFrame)) return false;
-        
-        return SwingUtils.titleContains(window, "Second Factor Authentication") ||
-            SwingUtils.titleContains(window, "Security Code Card Authentication");
+        if (!(window instanceof JDialog || window instanceof JFrame)) return false;
+
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Second_Factor_Auth") ||
+                SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Passcode_Card_Title");
     }
 
-    private void doReadonlyLogin(Window window){
-        if (SwingUtils.clickButton(window, "Enter Read Only")) {
-            Utils.logToConsole("initiating read-only login.");
+    private void doReadonlyLogin(Window window) {
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Enter_Read_Only")) {
+            logger.info("initiating read-only login.");
         } else {
-            Utils.logError("could not initiate read-only login.");
+            logger.error("could not initiate read-only login.");
         }
     }
-    
+
     private boolean secondFactorDeviceSelectionRequired(Window window) {
         // this area appears in the Second Factor Authentication dialog when the
         // user has enabled more than one second factor authentication method
 
-        return (SwingUtils.findTextArea(window, "Select second factor device") != null);
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.findTextAreaByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Select_second_factor_device") != null);
     }
-    
+
     private void selectSecondFactorDevice(Window window) {
         JList<?> deviceList = SwingUtils.findList(window, 0);
         if (deviceList == null) {
-            Utils.exitWithError(ErrorCodes.CANT_FIND_CONTROL, "could not find second factor device list.");
+            logger.error("could not find second factor device list.");
+            IbcExit.exit(ErrorCodes.CANT_FIND_CONTROL);
             return;
         }
 
         String secondFactorDevice = Settings.settings().getString("SecondFactorDevice", "");
         if (secondFactorDevice.length() == 0) {
-            Utils.logError("You should specify the required second factor device using the SecondFactorDevice setting in config.ini");
+            logger.error("You should specify the required second factor device using the SecondFactorDevice setting in config.ini");
             return;
         }
 
@@ -108,13 +122,14 @@ public class SecondFactorAuthenticationDialogHandler implements WindowHandler {
             if (entry.equals(secondFactorDevice)) {
                 deviceList.setSelectedIndex(i);
 
-                if (!SwingUtils.clickButton(window, "OK")) {
-                    Utils.logError("could not select second factor device: OK button not found");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+                    logger.error("could not select second factor device: OK button not found");
                 }
                 return;
             }
         }
-        Utils.logError("could not find second factor device '" + secondFactorDevice + "' in the list");
+        logger.error("could not find second factor device '{}' in the list", secondFactorDevice);
     }
-    
+
 }

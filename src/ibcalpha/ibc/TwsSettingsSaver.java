@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -28,6 +31,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 class TwsSettingsSaver {
+
+    private static final Logger logger = LoggerFactory.getLogger(TwsSettingsSaver.class);
     private static final TwsSettingsSaver instance = new TwsSettingsSaver();
     private static final DateFormat dateFormat = new SimpleDateFormat("HH:mm");
 
@@ -58,7 +63,7 @@ class TwsSettingsSaver {
             }
 
         } catch (IbcException e) {
-            Utils.logError("Invalid setting SaveTwsSettingsAt=" + timesSetting + ": " + e.getMessage() + "\nTWS Settings will not be saved automatically");
+            logger.error("Invalid setting SaveTwsSettingsAt={}: {}\nTWS Settings will not be saved automatically", timesSetting, e.getMessage());
         }
 
     }
@@ -143,10 +148,10 @@ class TwsSettingsSaver {
     }
 
     private static void scheduleSave(Date saveTime) {
-        Utils.logToConsole("Tws settings will be saved at " + dateFormat.format(saveTime));
+        logger.info("Tws settings will be saved at {}", dateFormat.format(saveTime));
 
         MyScheduledExecutorService.getInstance().scheduleAtFixedRate(() -> {
-            Utils.logToConsole("Saving Tws settings");
+            logger.info("Saving Tws settings");
             Utils.invokeMenuItem(MainWindowManager.mainWindowManager().getMainWindow(), new String[] {"File", "Save Settings"});
         }, saveTime.getTime() - System.currentTimeMillis(), 86400000, TimeUnit.MILLISECONDS);
     }

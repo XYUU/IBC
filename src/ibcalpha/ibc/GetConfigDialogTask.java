@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -26,6 +29,8 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 
 class GetConfigDialogTask implements Callable<JDialog>{
+
+    private static final Logger logger = LoggerFactory.getLogger(GetConfigDialogTask.class);
     private volatile JDialog mConfigDialog;
     private final Lock lock = new ReentrantLock();
     private final Condition gotConfigDialog = lock.newCondition();
@@ -36,7 +41,7 @@ class GetConfigDialogTask implements Callable<JDialog>{
         
         SessionManager.awaitReady();
 
-        Utils.logToConsole("Invoking config dialog menu");
+        logger.info("Invoking config dialog menu");
         if (SessionManager.isGateway()) {
             if (!Utils.invokeMenuItem(mainForm, new String[] {"Configure", "Settings"})) throw new IbcException("'Configure > Settings' menu item");
         } else if (Utils.invokeMenuItem(mainForm, new String[] {"Edit", "Global Configuration..."})) /* TWS's Classic layout */ {

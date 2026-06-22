@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class LoginErrorDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoginErrorDialogHandler.class);
 
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -36,13 +41,14 @@ public class LoginErrorDialogHandler implements WindowHandler {
 
     @Override
     public void handleWindow(Window window, int eventID) {
-        Utils.logToConsole("Login error message:" + SwingUtils.NEWLINE + SwingUtils.getTexts(window));
-        Utils.logToConsole("Cold restart in progress");
+        logger.info("Login error message:{}{}", SwingUtils.NEWLINE, SwingUtils.getTexts(window));
+        logger.info("Cold restart in progress");
         // stop tidily and do a cold restart
         MyCachedThreadPool.getInstance().execute(new StopTask(null, true, "Cold restart after Login Error dialog encountered"));
 
-        if (! SwingUtils.clickButton(window, "OK")) {
-            Utils.logError("could not dismiss Login Error dialog because we could not find the OK button");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+            logger.error("could not dismiss Login Error dialog because we could not find the OK button");
         }
     }
 
@@ -50,7 +56,8 @@ public class LoginErrorDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Login Error"));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Login_Error"));
     }
     
 }

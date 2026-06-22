@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class GatewayDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GatewayDialogHandler.class);
     
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -38,14 +43,15 @@ public class GatewayDialogHandler implements WindowHandler {
     public void handleWindow(Window window, int eventID) {
         String text = SwingUtils.getLabelTexts(window);
         // since this is a generic dialog, we always log the text
-        Utils.logToConsole(text);
+        logger.info(text);
         if (text.startsWith("Connection to server failed")) {
-            Utils.logToConsole("Cold restart in progress");
+            logger.info("Cold restart in progress");
             // stop tidily and do a cold restart
             MyCachedThreadPool.getInstance().execute(new StopTask(null, true, "Cold restart after Connection to server failed"));
 
-            if (! SwingUtils.clickButton(window, "OK")) {
-                Utils.logError("could not dismiss Login Error dialog because we could not find the OK button");
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+                logger.error("could not dismiss Login Error dialog because we could not find the OK button");
             }
         } else {
             // for other instances of this dialog, just leave it on display for the user to handle. For example,
@@ -57,7 +63,8 @@ public class GatewayDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Gateway"));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 58.3%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Gateway"));
     }
     
 }

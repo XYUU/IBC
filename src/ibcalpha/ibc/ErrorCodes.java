@@ -23,7 +23,7 @@ public final class ErrorCodes {
     public static final int UNHANDLED_EXCEPTION = 1100;
     public static final int CANT_FIND_CONTROL = 1101;
     public static final int INCORRECT_NUMBER_OF_ARGS = 1102;
-    public static final int INI_FILE_DOES_NOT_EXIST = 1103;
+    public static final int CONFIG_FILE_DOES_NOT_EXIST = 1103;
     public static final int INVALID_TRADING_MODE = 1104;
     public static final int INVALID_SETTING_VALUE = 1105;
     public static final int CANT_CREATE_TWS_SETTINGS_DIR = 1106;

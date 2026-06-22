@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 class NewerVersionFrameHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(NewerVersionFrameHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -34,17 +39,20 @@ class NewerVersionFrameHandler implements WindowHandler {
     }
 
     public void handleWindow(Window window, int eventID) {
-        if (SwingUtils.clickButton(window, "OK")) {
-        } else if (SwingUtils.clickButton(window, "No")) { // ie no we don't want the opportunity to upgrade now - Linux version only
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+        } else // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "no")) { // ie no we don't want the opportunity to upgrade now - Linux version only
         } else {
-            Utils.logError("could not dismiss Newer Version because we could not find one of the controls.");
+            logger.error("could not dismiss Newer Version because we could not find one of the controls.");
         }
     }
 
     public boolean recogniseWindow(Window window) {
         if (!(window instanceof JFrame)) return false;
 
-        return (SwingUtils.findLabel(window, "Newer Version") != null);
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 44.4%
+        return (SwingUtils.findLabelByBundle(window, "ji18n.Language", "LoginWindow_Inf_Up") != null);
     }
 }
 

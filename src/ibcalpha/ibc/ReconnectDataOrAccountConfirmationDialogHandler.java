@@ -18,12 +18,17 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static ibcalpha.ibc.SwingUtils.getWindowTitle;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class ReconnectDataOrAccountConfirmationDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReconnectDataOrAccountConfirmationDialogHandler.class);
 
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -37,8 +42,9 @@ public class ReconnectDataOrAccountConfirmationDialogHandler implements WindowHa
 
     @Override
     public void handleWindow(Window window, int eventID) {
-        if (! SwingUtils.clickButton(window, "OK")) {
-            Utils.logError("could not dismiss " + getWindowTitle(window) + " because we could not find the OK button");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+            logger.error("could not dismiss {} because we could not find the OK button", getWindowTitle(window));
         }
     }
 
@@ -46,11 +52,14 @@ public class ReconnectDataOrAccountConfirmationDialogHandler implements WindowHa
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return ((SwingUtils.titleContains(window, "IBKR Trader Workstation") 
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 78.3%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 58.3%
+// [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 匹配开头 | 相似度: 59.5%
+        return ((SwingUtils.titleContains(window, "IBKR Trader Workstation")
                 ||
                 SwingUtils.titleContains(window, "IBKR Gateway"))
                 && 
-                (SwingUtils.findLabel(window, "Are you sure you want to execute \"simulate") != null)
+                (SwingUtils.findLabelByBundle(window, "ji18n.Language", "Confirm_Private_Hotkey") != null)
                 );
     }
     

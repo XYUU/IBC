@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 public class PasswordExpiryWarningFrameHandler  implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(PasswordExpiryWarningFrameHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -35,14 +40,16 @@ public class PasswordExpiryWarningFrameHandler  implements WindowHandler {
 
     public void handleWindow(Window window, int eventID) {
         if (! Settings.settings().getBoolean("DismissPasswordExpiryWarning", false)) return;
-        if (! SwingUtils.clickButton(window, "OK")) {
-            Utils.logError("could not dismiss Password Expiry Warning because we could not find one of the controls.");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+            logger.error("could not dismiss Password Expiry Warning because we could not find one of the controls.");
         }
     }
 
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JFrame)) return false;
 
-        return (SwingUtils.titleContains(window, "Password Notice"));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Password_Notice"));
     }
 }

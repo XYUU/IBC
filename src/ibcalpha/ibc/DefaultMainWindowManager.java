@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Frame;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
@@ -34,6 +37,8 @@ import javax.swing.SwingUtilities;
 
 public class DefaultMainWindowManager extends MainWindowManager {
 
+    private static final Logger logger = LoggerFactory.getLogger(DefaultMainWindowManager.class);
+
     private volatile JFrame mainWindow = null;
 
     private volatile GetMainWindowTask mainWindowTask;
@@ -43,7 +48,7 @@ public class DefaultMainWindowManager extends MainWindowManager {
 
     @Override
     public void logDiagnosticMessage(){
-        Utils.logToConsole("using default main window manager");
+        logger.info("using default main window manager");
     }
 
     /**
@@ -71,18 +76,18 @@ public class DefaultMainWindowManager extends MainWindowManager {
     public JFrame getMainWindow(long timeout, TimeUnit unit) {
         if (SwingUtilities.isEventDispatchThread()) throw new IllegalStateException();
 
-        Utils.logToConsole("Getting main window");
+        logger.info("Getting main window");
 
         if (mainWindow != null) {
-            Utils.logToConsole("Main window already found");
+            logger.info("Main window already found");
             return mainWindow;
         }
 
         synchronized(futureCreationLock) {
             if (mainWindowFuture != null) {
-                    Utils.logToConsole("Waiting for main window future to complete");
+                    logger.info("Waiting for main window future to complete");
             } else {
-                Utils.logToConsole("Creating main window future");
+                logger.info("Creating main window future");
                 mainWindowTask = new GetMainWindowTask();
                 ExecutorService exec = Executors.newSingleThreadExecutor();
                 mainWindowFuture = exec.submit((Callable<JFrame>) mainWindowTask);
@@ -96,7 +101,7 @@ public class DefaultMainWindowManager extends MainWindowManager {
             } else {
                 mainWindow = mainWindowFuture.get(timeout, unit);
             }
-            Utils.logToConsole("Got main window from future");
+            logger.info("Got main window from future");
             return mainWindow;
         } catch (TimeoutException | InterruptedException e) {
             return null;
@@ -130,7 +135,7 @@ public class DefaultMainWindowManager extends MainWindowManager {
 
     @Override
     public void setMainWindow(JFrame window) {
-        Utils.logToConsole("Found " + (SessionManager.isGateway() ? "Gateway" : "TWS") + " main window");
+        logger.info("Found {} main window", (SessionManager.isGateway() ? "Gateway" : "TWS"));
         mainWindow = window;
 
         // For TWS, the main window being opened indicates that login is complete. This is not the case
@@ -165,7 +170,7 @@ public class DefaultMainWindowManager extends MainWindowManager {
     @Override
     public void iconizeIfRequired() {
         if (Settings.settings().getBoolean("MinimizeMainWindow", false)) {
-            Utils.logToConsole("Minimizing main window");
+            logger.info("Minimizing main window");
             mainWindow.setExtendedState(java.awt.Frame.ICONIFIED);
         }
         lastMinimizeTime = Calendar.getInstance().getTimeInMillis();

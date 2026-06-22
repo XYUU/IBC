@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 class TipOfTheDayDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(TipOfTheDayDialogHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -34,14 +39,16 @@ class TipOfTheDayDialogHandler implements WindowHandler {
     }
 
     public void handleWindow(Window window, int eventID) {
-        if (! SwingUtils.clickButton(window, "Close")) {
-            Utils.logError("could not dismiss Tip of the Day because we could not find one of the controls.");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Close")) {
+            logger.error("could not dismiss Tip of the Day because we could not find one of the controls.");
         }
     }
 
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Tip of the Day"));
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(忽略大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "ji18n.Language", "n_day"));
     }
 }

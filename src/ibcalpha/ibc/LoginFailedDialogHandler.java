@@ -18,12 +18,16 @@
 
 package ibcalpha.ibc;
 
-import java.awt.Frame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class LoginFailedDialogHandler implements WindowHandler  {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoginFailedDialogHandler.class);
     final String DIALOG_TITLE = "Login failed";
 
     @Override
@@ -38,13 +42,14 @@ public class LoginFailedDialogHandler implements WindowHandler  {
 
     @Override
     public void handleWindow(Window window, int eventID) {
-        Utils.logToConsole("Login failed");
-        Utils.logToConsole("Cold restart in progress");
+        logger.info("Login failed");
+        logger.info("Cold restart in progress");
         // stop tidily and do a cold restart
         MyCachedThreadPool.getInstance().execute(new StopTask(null, true, "Cold restart after Login Failed dialog encountered"));
 
-        if (! SwingUtils.clickButton(window, "OK")) {
-            Utils.logError("could not dismiss Login Failed dialog because we could not find the OK button");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+            logger.error("could not dismiss Login Failed dialog because we could not find the OK button");
         }
     }
 

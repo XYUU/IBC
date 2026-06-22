@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class ResetOrderIdConfirmationDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(ResetOrderIdConfirmationDialogHandler.class);
     
     static volatile boolean orderIdResetRequestedAtStart;
 
@@ -51,7 +56,7 @@ public class ResetOrderIdConfirmationDialogHandler implements WindowHandler {
         
         String action;
         if (orderIdResetRequestedAtStart) {
-            Utils.logToConsole("Order id reset requested at startup");
+            logger.info("Order id reset requested at startup");
             switch (confirmAtStart) {
                 case CONFIRM_RESET:
                 case REJECT_RESET:
@@ -63,7 +68,7 @@ public class ResetOrderIdConfirmationDialogHandler implements WindowHandler {
             }
             orderIdResetRequestedAtStart = false;
         } else {
-            Utils.logToConsole("Order id reset requested by user");
+            logger.info("Order id reset requested by user");
             switch (confirmUserInitiated) {
                 case CONFIRM_RESET:
                 case REJECT_RESET:
@@ -80,18 +85,20 @@ public class ResetOrderIdConfirmationDialogHandler implements WindowHandler {
                 case INVALID_SETTING:
                     throw new IbcException("Invalid setting ConfirmOrderIdReset=" + confirmSetting);
                 case CONFIRM_RESET:
-                    Utils.logToConsole("Accepting order id reset");
-                    if (!SwingUtils.clickButton(window, "Yes")) throw new IbcException("Can't find 'Yes' button");
+                    logger.info("Accepting order id reset");
+                    // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                    if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "yes")) throw new IbcException("Can't find 'Yes' button");
                     break;
                 case REJECT_RESET:
-                    Utils.logToConsole("Rejecting order id reset");
-                    if (!SwingUtils.clickButton(window, "No")) throw new IbcException("Can't find 'Yes' button");
+                    logger.info("Rejecting order id reset");
+                    // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                    if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "no")) throw new IbcException("Can't find 'Yes' button");
                     break;
                 case IGNORE_DIALOG:
-                    Utils.logToConsole("User must handle order id reset confirmation dialog");
+                    logger.info("User must handle order id reset confirmation dialog");
             }
         } catch (IbcException e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         }
     }
 
@@ -99,7 +106,8 @@ public class ResetOrderIdConfirmationDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.findLabel(window, "Are you sure you want to reset API order ID sequence?") != null);
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.findLabelByBundle(window, "ji18n.Language", "Confirm_reset_API_order_ids_msg") != null);
     }
     
 }

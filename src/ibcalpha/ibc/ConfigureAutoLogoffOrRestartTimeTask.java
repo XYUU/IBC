@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Container;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +31,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 class ConfigureAutoLogoffOrRestartTimeTask implements ConfigurationAction {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigureAutoLogoffOrRestartTimeTask.class);
     private final String autoActionTime;
     private final String autoActionName;
     private JDialog configDialog;
@@ -50,7 +55,7 @@ class ConfigureAutoLogoffOrRestartTimeTask implements ConfigurationAction {
     @Override
     public void run() {
         try {
-            Utils.logToConsole("Setting " + autoActionName  + " time");
+            logger.info("Setting {} time", autoActionName);
             
             DateTimeFormatter timeFormatter12HourAmPm = DateTimeFormatter.ofPattern("hh:mm a");
 
@@ -62,8 +67,10 @@ class ConfigureAutoLogoffOrRestartTimeTask implements ConfigurationAction {
             }
 
             Utils.selectConfigSection(configDialog, new String[] {"Lock and Exit"});
-            JLabel l = SwingUtils.findLabel(configDialog, "Set Auto Log Off Time (HH:MM)");
-            if (l == null) l = SwingUtils.findLabel(configDialog, "Set Auto Restart Time (HH:MM)");
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            JLabel l = SwingUtils.findLabelByBundle(configDialog, "ji18n.Language", "Set_Auto_Log_Off_Time_(HH:MM)");
+            if (l == null) // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                l = SwingUtils.findLabelByBundle(configDialog, "ji18n.Language", "Set_Auto_Restart_Time_(HH:MM)");
             if (l == null) throw new IbcException("could not find auto logoff/restart time settings");
 
             Container c = javax.swing.SwingUtilities.getAncestorOfClass(Container.class, l);
@@ -73,7 +80,9 @@ class ConfigureAutoLogoffOrRestartTimeTask implements ConfigurationAction {
 
             JTextField tf = SwingUtils.findTextField(c, 0);
             JRadioButton autoAction = SwingUtils.findRadioButton(c, autoActionName);
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 匹配开头 | 相似度: 66.7%
             JRadioButton am = SwingUtils.findRadioButton(c, "AM");
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 40.0%
             JRadioButton pm = SwingUtils.findRadioButton(c, "PM");
             if (tf == null || autoAction == null || am == null || pm == null) throw new IbcException("could not find auto logoff/restart time controls");
 
@@ -86,7 +95,7 @@ class ConfigureAutoLogoffOrRestartTimeTask implements ConfigurationAction {
             LocalTime currentAutoActionTime = LocalTime.parse(tf.getText() + (am.isSelected() ? " AM" : " PM"), timeFormatter12HourAmPm);
 
             if (newAutoActionTime.equals(currentAutoActionTime) && autoAction.isSelected()) {
-                Utils.logToConsole(autoActionName + " time already set to " + currentAutoActionTime.format(timeFormatter12HourAmPm));
+                logger.info("{} time already set to {}", autoActionName, currentAutoActionTime.format(timeFormatter12HourAmPm));
             } else {
                 tf.setText(time);
                 if ("AM".equals(ampm)) {
@@ -96,19 +105,15 @@ class ConfigureAutoLogoffOrRestartTimeTask implements ConfigurationAction {
                 }
 
                 if (autoAction.isSelected()) {
-                    Utils.logToConsole(autoActionName + " time changed from " + 
-                                        currentAutoActionTime.format(timeFormatter12HourAmPm) + 
-                                        " to " + 
-                                        newAutoActionTime.format(timeFormatter12HourAmPm));
+                    logger.info("{} time changed from {} to {}", autoActionName, currentAutoActionTime.format(timeFormatter12HourAmPm), newAutoActionTime.format(timeFormatter12HourAmPm));
                 } else {
                     autoAction.setSelected(true);
-                    Utils.logToConsole(autoActionName + " time set to " + 
-                                        newAutoActionTime.format(timeFormatter12HourAmPm));
+                    logger.info("{} time set to {}", autoActionName, newAutoActionTime.format(timeFormatter12HourAmPm));
                 }
             }
             
         } catch (IbcException e) {
-            Utils.logError(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
     

@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Component;
 import java.awt.Container;
 import java.util.ArrayDeque;
@@ -27,12 +30,14 @@ import java.util.NoSuchElementException;
 
 class ComponentIterator implements Iterator<Component> {
 
+    private static final Logger logger = LoggerFactory.getLogger(ComponentIterator.class);
+
     Deque<NodeState> mStack = new ArrayDeque<>();
 
     Component mCurrent;
 
     ComponentIterator(Container container) {
-        if (container == null) Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION,new NullPointerException());
+        if (container == null) { logger.error("An exception has occurred", new NullPointerException()); IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION); }
         mStack.push(new NodeState(container));
     }
 

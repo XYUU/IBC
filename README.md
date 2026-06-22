@@ -1,5 +1,17 @@
 **Download the
-[latest official release here](https://github.com/IbcAlpha/IBC/releases/latest)**
+[latest official release here](https://github.com/XYUU/IBC/releases/latest)**
+
+Since the original author is no longer planning to maintain this project, and as a long‑time user who has benefited from it and has the ability to continue its development, I will take over the maintenance going forward. I plan to keep improving the project, especially in terms of user interaction and overall usability.
+
+### ✔️ Implemented Features
+
+- [x] Multi-language client support  
+- [x] ``Support for “Mobile Authenticator App” two-factor authentication(To avoid any unnecessary trouble, I’ve removed this feature from the release.)``  
+- [x] Gradle-based startup, allowing the project to run without `.bat` or `.sh` scripts  
+- [x] SLF4J-based logging, replacing `System.out` and enabling configurable log levels  
+- [x] Renamed the original `.ini` configuration file (actually Java Properties) to the standard `.properties` extension, enabling proper syntax highlighting and comment support in editors
+
+**I do not assume any responsibility for losses or damages resulting from the use of this feature. It is open‑source and entirely optional.**
 
 IBC automates many aspects of running [Interactive Brokers](https://www.interactivebrokers.com) [Trader Workstation and Gateway](https://www.interactivebrokers.com/en/index.php?f=14099#tws-software)
 that would otherwise involve manual intervention. It's especially useful for
@@ -53,7 +65,7 @@ Downloads
 
 If you just want to use IBC without modifying it, you should download
 the latest official release ZIP which you can find
-[here](https://github.com/IbcAlpha/IBC/releases/latest). Note that
+[here](https://github.com/XYUU/IBC/releases/latest). Note that
 there are separate release files for Windows, macOS and Linux.
 
 Users who want to make changes to IBC should clone this repository
@@ -86,7 +98,7 @@ for improvement, you should join the [IBC User Group](https://groups.io/g/ibcalp
 If you're convinced you've found a bug in IBC, please report it via either
 the
 [IBC User Group](https://groups.io/g/ibcalpha) or the
-[GitHub Issue Tracker](https://github.com/IbcAlpha/IBC/issues).
+[GitHub Issue Tracker](https://github.com/XYUU/IBC/issues).
 Please provide as much evidence as you can, especially the versions of IBC
 and TWS/Gateway you're using and a full description of the incorrect
 behaviour you're seeing.
@@ -121,7 +133,7 @@ A brief note by Richard L King (rlktradewright on GitHub) updated
 5 April 2019.
 
 IBC is a fork of the original
-[IBController project](https://github.com/ib-controller/ib-controller).
+[IBController project](https://github.com/IbcAlpha/IBC).
 For many years, from 2004 to early 2018, I was the primary
 maintainer, developer and supporter for that project.
 
@@ -135,7 +147,7 @@ IBController users are invited to switch to IBC.
 
 If you switch from IBController to IBC, please note that there are some
 significant differences, and it's best to install IBC from scratch using
-the download on the [Releases page](https://github.com/IbcAlpha/IBC/releases).
+the download on the [Releases page](https://github.com/XYUU/IBC/releases).
 The last section of the [IBC User Guide](userguide.md) contains useful
 information about these differences.
 

@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class SecurityCodeDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityCodeDialogHandler.class);
 
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -38,17 +43,19 @@ public class SecurityCodeDialogHandler implements WindowHandler {
     public void handleWindow(Window window, int eventID) {
         if (! Settings.settings().getBoolean("ReadOnlyLogin", false)) return;
 
-        if (SwingUtils.clickButton(window, "Enter Read Only")) {
-            Utils.logToConsole("initiating read-only login.");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Enter_Read_Only")) {
+            logger.info("initiating read-only login.");
         } else {
-            Utils.logError("could not initiate read-only login.");
+            logger.error("could not initiate read-only login.");
         }
     }
 
     @Override
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
-        return (SwingUtils.findButton(window, "Enter Read Only") != null);
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Enter_Read_Only") != null);
     }
 
 }

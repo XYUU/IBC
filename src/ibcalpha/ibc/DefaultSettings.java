@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,6 +30,8 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class DefaultSettings extends Settings {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultSettings.class);
 
     private final Properties props = new Properties();
     private String path;
@@ -39,35 +44,25 @@ public class DefaultSettings extends Settings {
         load(getSettingsPath(args));
     }
 
-    public DefaultSettings(String path) {
-        load(path);
-    }
-
     private void load(String path) {
         this.path = path;
         props.clear();
-        try {
-            File f = new File(path);
-            InputStream is = new BufferedInputStream(new FileInputStream(f));
+        try (InputStream is = new FileInputStream(path)) {
             props.load(is);
-            is.close();
-
-            Utils.logRawToConsole("IBC Settings:");
-            Object[] keys = props.stringPropertyNames().toArray();
-            java.util.Arrays.sort(keys);
-            for (Object key : keys){
-                Utils.logRawToConsole("    " + key + "=" + getSettingSanitisedValue(key.toString()));
-            }
-            Utils.logRawToConsole("End IBC Settings\n" );
         } catch (FileNotFoundException e) {
-            Utils.logToConsole("Properties file " + path + " not found");
+            logger.error("Properties file {} not found", path);
         } catch (IOException e) {
-            Utils.logToConsole(
-                    "Exception accessing Properties file " + path);
-            Utils.logToConsole(e.toString());
+            logger.error("Exception accessing Properties file {}", path, e);
         }
+        logger.info("IBC Settings:");
+        Object[] keys = props.stringPropertyNames().toArray();
+        java.util.Arrays.sort(keys);
+        for (Object key : keys) {
+            logger.info("    {}={}", key, getSettingSanitisedValue(key.toString()));
+        }
+        logger.info("End IBC Settings\n");
     }
-    
+
     private String getSettingSanitisedValue(String key) {
         String value = props.getProperty(key);
         if (key.equalsIgnoreCase("FIXLoginId") ||
@@ -83,22 +78,22 @@ public class DefaultSettings extends Settings {
 
     static String generateDefaultIniPath() {
         if (System.getProperty("os.name").startsWith("Windows")) {
-            return System.getenv("HOMEDRIVE") + 
-                    System.getenv("HOMEPATH") + File.separator + 
-                    "Documents" + File.separator + 
-                    "IBC" + File.separator + 
-                    "config.ini";
+            return System.getenv("HOMEDRIVE") +
+                    System.getenv("HOMEPATH") + File.separator +
+                    "Documents" + File.separator +
+                    "IBC" + File.separator +
+                    "config.properties";
         } else {
-            return System.getProperty("user.home") + File.separator + 
-                    "ibc" + File.separator + 
-                    "config.ini";
+            return System.getProperty("user.home") + File.separator +
+                    "ibc" + File.separator +
+                    "config.properties";
         }
     }
 
-    static String getSettingsPath(String [] args) {
+    static String getSettingsPath(String[] args) {
         String iniPath;
         if (args.length == 0 || args[0].equalsIgnoreCase("NULL")) {
-            iniPath = getWorkingDirectory() + "config." + getComputerUserName() + ".ini";
+            iniPath = getWorkingDirectory() + "config." + getComputerUserName() + ".properties";
         } else if (args[0].length() == 0) {
             iniPath = generateDefaultIniPath();
         } else {// args.length >= 1
@@ -106,8 +101,8 @@ public class DefaultSettings extends Settings {
         }
         File finiPath = new File(iniPath);
         if (!finiPath.isFile() || !finiPath.exists()) {
-            Utils.exitWithError(ErrorCodes.INI_FILE_DOES_NOT_EXIST,  "ini file \"" + iniPath +
-                               "\" either does not exist, or is a directory.  quitting...");
+            logger.error("ini file \"{}\" either does not exist, or is a directory.  quitting...", iniPath);
+            IbcExit.exit(ErrorCodes.CONFIG_FILE_DOES_NOT_EXIST);
         }
         return iniPath;
     }
@@ -134,23 +129,24 @@ public class DefaultSettings extends Settings {
     }
 
     @Override
-    public void logDiagnosticMessage(){
-        Utils.logToConsole("using default settings provider: ini file is " + path);
+    public void logDiagnosticMessage() {
+        logger.info("using default settings provider: ini file is {}", path);
     }
 
     /**
-    returns the value associated with property named key.
-    Returns defaultValue if no such property.
+     * returns the value associated with property named key.
+     * Returns defaultValue if no such property.
+     *
      * @param key
      * @param defaultValue
-     * @return 
+     * @return
      */
     @Override
     public String getString(String key,
                             String defaultValue) {
         String value = props.getProperty(key, defaultValue);
 
-        // handle key=[empty string] in .ini file 
+        // handle key=[empty string] in .properties file
         if (value.isEmpty()) {
             value = defaultValue;
         }
@@ -158,19 +154,20 @@ public class DefaultSettings extends Settings {
     }
 
     /**
-    returns the int value associated with property named key.
-    Returns defaultValue if there is no such property,
-    or if the property value cannot be converted to an int.
+     * returns the int value associated with property named key.
+     * Returns defaultValue if there is no such property,
+     * or if the property value cannot be converted to an int.
+     *
      * @param key
      * @param defaultValue
-     * @return 
+     * @return
      */
     @Override
     public int getInt(String key,
                       int defaultValue) {
         String value = props.getProperty(key);
 
-        // handle key missing or key=[empty string] in .ini file 
+        // handle key missing or key=[empty string] in .properties file
         if (value == null || value.length() == 0) {
             return defaultValue;
         }
@@ -178,18 +175,12 @@ public class DefaultSettings extends Settings {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            Utils.logToConsole(
-                    "Invalid number \""
-                    + value
-                    + "\" for property \""
-                    + key
-                    + "\"");
+            logger.info("Invalid number \"{}\" for property \"{}\"", value, key);
             return defaultValue;
         }
     }
 
     /**
-     *
      * @param key
      * @param defaultValue
      * @return
@@ -199,37 +190,33 @@ public class DefaultSettings extends Settings {
                         String defaultValue) {
         String value = props.getProperty(key, defaultValue);
 
-        // handle key missing or key=[empty string] in .ini file 
+        // handle key missing or key=[empty string] in .properties file
         if (value == null || value.length() == 0) {
             return defaultValue.charAt(0);
         }
 
         if (value.length() != 1) {
-            Utils.logToConsole(
-                    "Invalid character \""
-                    + value
-                    + "\" for property \""
-                    + key
-                    + "\"");
+            logger.info("Invalid character \"{}\" for property \"{}\"", value, key);
         }
 
         return value.charAt(0);
     }
 
     /**
-    returns the double value associated with property named key.
-    Returns defaultVAlue if there is no such property,
-    or if the property value cannot be converted to a double.
+     * returns the double value associated with property named key.
+     * Returns defaultVAlue if there is no such property,
+     * or if the property value cannot be converted to a double.
+     *
      * @param key
      * @param defaultValue
-     * @return 
+     * @return
      */
     @Override
     public double getDouble(String key,
                             double defaultValue) {
         String value = props.getProperty(key);
 
-        // handle key missing or key=[empty string] in .ini file 
+        // handle key missing or key=[empty string] in .properties file
         if (value == null || value.length() == 0) {
             return defaultValue;
         }
@@ -237,30 +224,26 @@ public class DefaultSettings extends Settings {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            Utils.logToConsole(
-                    "Invalid number \""
-                    + value
-                    + "\" for property \""
-                    + key
-                    + "\"");
+            logger.info("Invalid number \"{}\" for property \"{}\"", value, key);
             return defaultValue;
         }
     }
 
     /**
-    returns the boolean value associated with property named key.
-    Returns defaultValue if there is no such property,
-    or if the property value cannot be converted to a boolean.
+     * returns the boolean value associated with property named key.
+     * Returns defaultValue if there is no such property,
+     * or if the property value cannot be converted to a boolean.
+     *
      * @param key
      * @param defaultValue
-     * @return 
+     * @return
      */
     @Override
     public boolean getBoolean(String key,
                               boolean defaultValue) {
         String value = props.getProperty(key);
 
-        // handle key missing or key=[empty string] in .ini file 
+        // handle key missing or key=[empty string] in .properties file
         if (value == null || value.length() == 0) {
             return defaultValue;
         }

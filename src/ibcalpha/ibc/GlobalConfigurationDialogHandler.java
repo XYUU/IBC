@@ -50,6 +50,7 @@ class GlobalConfigurationDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Configuration"));
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 匹配开头 | 相似度: 56.5%
+        return (SwingUtils.titleContainsByBundle(window, "ji18n.Language", "Configuration"));
     }
 }

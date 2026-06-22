@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 class AcceptIncomingConnectionDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(AcceptIncomingConnectionDialogHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -42,25 +47,29 @@ class AcceptIncomingConnectionDialogHandler implements WindowHandler {
         if (acceptIncomingConnectionAction.equalsIgnoreCase(Manual)) return;
 
         if (acceptIncomingConnectionAction.equalsIgnoreCase(Accept)) {
-            if (SwingUtils.clickButton(window, "OK")) {
-            } else if (SwingUtils.clickButton(window, "Yes")) {
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+            } else // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "yes")) {
             } else {
-                Utils.logError("could not accept incoming connection because we could not find one of the controls.");
+                logger.error("could not accept incoming connection because we could not find one of the controls.");
             }
         } else if (acceptIncomingConnectionAction.equalsIgnoreCase(Reject)) {
-            if (SwingUtils.clickButton(window, "No")) {
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "no")) {
             } else {
-                Utils.logError("could not accept incoming connection because we could not find one of the controls.");
+                logger.error("could not accept incoming connection because we could not find one of the controls.");
             }
         } else {
-                Utils.logError("could not accept incoming connection because the AcceptIncomingConnectionAction setting is invalid.");
+                logger.error("could not accept incoming connection because the AcceptIncomingConnectionAction setting is invalid.");
         }
     }
 
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.findLabel(window, "Accept incoming connection") != null);
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.findLabelByBundle(window, "ji18n.Language", "Accept_capped_price") != null);
     }
 }
 

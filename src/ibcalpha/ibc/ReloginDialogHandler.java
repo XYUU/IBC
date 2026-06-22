@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class ReloginDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReloginDialogHandler.class);
 
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -36,18 +41,20 @@ public class ReloginDialogHandler implements WindowHandler {
 
     @Override
     public void handleWindow(Window window, int eventID) {
-        Utils.logToConsole("Re-login to session");
-        if (SwingUtils.clickButton(window, "Re-login"))  {
+        logger.info("Re-login to session");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Relogin"))  {
             LoginManager.loginManager().setLoginState(LoginManager.LoginState.LOGGING_IN);
         } else {
-            Utils.logError("could not handle 'Re-login is required' dialog because the 'Re-login' button wasn't found.");
+            logger.error("could not handle 'Re-login is required' dialog because the 'Re-login' button wasn't found.");
         }
 }
 
     @Override
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
-        return (SwingUtils.titleContains(window, "Re-login is required"));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Relogin_Is_Required"));
     }
 
 }

@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
@@ -26,9 +29,11 @@ import javax.swing.JFrame;
 class CommandDispatcher
         implements Runnable {
 
+    private static final Logger logger = LoggerFactory.getLogger(CommandDispatcher.class);
+
     private final CommandChannel mChannel;
 
-    private final static int SHORTCUT_MODIFIERS = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK;
+    private final static int SHORTCUT_MODIFIERS = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | KeyEvent.ALT_DOWN_MASK;
 
             
     CommandDispatcher(CommandChannel channel) {
@@ -64,7 +69,7 @@ class CommandDispatcher
 
     private void handleInvalidCommand(String cmd) {
         mChannel.writeNack("Command invalid");
-        Utils.logError("CommandServer: invalid command received: " + cmd);
+        logger.error("CommandServer: invalid command received: {}", cmd);
     }
 
     private void handleEnableAPICommand() {

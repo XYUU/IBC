@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Component;
 import java.awt.Container;
 import javax.swing.JCheckBox;
@@ -25,6 +28,8 @@ import javax.swing.JDialog;
 import javax.swing.JTextField;
 
 class ConfigureTwsMasterClientIDTask implements ConfigurationAction{
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigureTwsMasterClientIDTask.class);
 
     private final String masterClientID;
     private JDialog configDialog;
@@ -36,11 +41,12 @@ class ConfigureTwsMasterClientIDTask implements ConfigurationAction{
     @Override
     public void run() {
         try {
-            Utils.logToConsole("Performing master client ID configuration");
+            logger.info("Performing master client ID configuration");
 
             Utils.selectApiSettings(configDialog);
 
-            Component comp = SwingUtils.findComponent(configDialog, "Master API client ID");
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            Component comp = SwingUtils.findComponentByBundle(configDialog, "ji18n.Language", "Master_API_client_ID");
             if (comp == null) throw new IbcException("could not find Master Client ID component");
 
             JTextField tf = SwingUtils.findTextField((Container)comp, 0);
@@ -48,19 +54,20 @@ class ConfigureTwsMasterClientIDTask implements ConfigurationAction{
 
             String currentMasterClientID = tf.getText();
             if (currentMasterClientID.equals(masterClientID)) {
-                Utils.logToConsole("TWS Master Client ID is already set to " + tf.getText());
+                logger.info("TWS Master Client ID is already set to {}", tf.getText());
             } else {
                 if (!SessionManager.isGateway()) {
-                    JCheckBox cb = SwingUtils.findCheckBox(configDialog, "Enable ActiveX and Socket Clients");
+                    // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                    JCheckBox cb = SwingUtils.findCheckBoxByBundle(configDialog, "ji18n.Language", "Conf_Item_23_Txt");
                     if (cb == null) throw new IbcException("could not find Enable ActiveX checkbox");
                     if (cb.isSelected()) ConfigDialogManager.configDialogManager().setApiConfigChangeConfirmationExpected();
                 }
-                Utils.logToConsole("TWS Master Client ID was set to " + tf.getText());
+                logger.info("TWS Master Client ID was set to {}", tf.getText());
                 tf.setText(masterClientID);
-                Utils.logToConsole("TWS Master Client ID now set to " + tf.getText());
+                logger.info("TWS Master Client ID now set to {}", tf.getText());
             }
         } catch (IbcException e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         }
     }
 

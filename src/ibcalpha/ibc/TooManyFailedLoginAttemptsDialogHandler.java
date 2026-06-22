@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.time.Duration;
@@ -27,6 +30,8 @@ import javax.swing.JDialog;
 import java.util.regex.*;
 
 public class TooManyFailedLoginAttemptsDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(TooManyFailedLoginAttemptsDialogHandler.class);
         @Override
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
@@ -44,8 +49,9 @@ public class TooManyFailedLoginAttemptsDialogHandler implements WindowHandler {
         // or like this:
         //      "Too many failed login attempts. Please wait 4 minutes & 47 seconds before attempting to re-login again."
         //
-            String message = SwingUtils.findTextArea(window, "Too many failed login attempts").getText();
-            Utils.logToConsole(message);
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 68.2%
+        String message = SwingUtils.findTextAreaByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Frequent_Login").getText();
+            logger.info(message);
             Pattern p = Pattern.compile("(?:Too many failed login attempts. Please wait (?:(\\d\\d?) minute(?:s)? )?(?:& )?(?:(\\d\\d?) second(?:s)?)?)?");
             Matcher m = p.matcher(message);
             String minutes = "";
@@ -59,9 +65,7 @@ public class TooManyFailedLoginAttemptsDialogHandler implements WindowHandler {
             Duration waitfor = Duration.parse("PT" + minutes + "M" + seconds + "S").plus(Duration.ofSeconds(3));
 
             if (Settings.settings().getBoolean("ReloginAfterSecondFactorAuthenticationTimeout", false)) {
-                Utils.logToConsole("Will re-login at " + Utils.formatDate(LocalDateTime.now().plus(waitfor)) + 
-                                    "; login number: " + 
-                                    (LoginManager.loginManager().getLoginHandler().currentLoginAttemptNumber() + 1));
+                logger.info("Will re-login at {}; login number: {}", Utils.formatDate(LocalDateTime.now().plus(waitfor)), (LoginManager.loginManager().getLoginHandler().currentLoginAttemptNumber() + 1));
 
                 MyScheduledExecutorService.getInstance().schedule(() -> {
                     GuiDeferredExecutor.instance().execute(
@@ -71,8 +75,9 @@ public class TooManyFailedLoginAttemptsDialogHandler implements WindowHandler {
                     );
                 }, waitfor.getSeconds(), TimeUnit.SECONDS);
 
-                if (!SwingUtils.clickButton(window, "OK")) {
-                    Utils.logError("could not dismiss \"Too many failed login attempts\" dialog because we could not find one of the controls.");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+                    logger.error("could not dismiss \"Too many failed login attempts\" dialog because we could not find one of the controls.");
                 }
             }
     }
@@ -81,7 +86,8 @@ public class TooManyFailedLoginAttemptsDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.findTextArea(window, "Too many failed login attempts") != null);
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 68.2%
+        return (SwingUtils.findTextAreaByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Frequent_Login") != null);
     }
 
 }

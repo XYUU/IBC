@@ -18,13 +18,21 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ServiceLoader;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
 
+import ibcalpha.ibc.spi.PostLoginHook;
+
 public abstract class LoginManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoginManager.class);
 
     private static LoginManager _LoginManager;
 
@@ -57,7 +65,7 @@ public abstract class LoginManager {
     boolean readonlyLoginRequired() {
         boolean readOnly = Settings.settings().getBoolean("ReadOnlyLogin", false);
         if (readOnly && SessionManager.isGateway()) {
-            Utils.logError("Read-only login not supported by Gateway");
+            logger.error("Read-only login not supported by Gateway");
             return false;
         }
         return readOnly;
@@ -82,18 +90,20 @@ public abstract class LoginManager {
         loginState = state;
         if (null != loginState) switch (loginState) {
             case TWO_FA_IN_PROGRESS:
-                Utils.logToConsole("Second Factor Authentication initiated");
+                logger.info("Second Factor Authentication initiated");
                 if (LoginStartTime == null) LoginStartTime = Instant.now();
                 break;
             case LOGGING_IN:
                 if (LoginStartTime == null) LoginStartTime = Instant.now();
                 break;
             case LOGGED_IN:
-                Utils.logToConsole("Login has completed");
+                logger.info("Login has completed");
                 if (shutdownAfterTimeTask != null) {
                     shutdownAfterTimeTask.cancel(false);
                     shutdownAfterTimeTask = null;
-                }   break;
+                }
+                firePostLoginHooks();
+                break;
             default:
                 break;
         }
@@ -101,6 +111,23 @@ public abstract class LoginManager {
 
     private Instant LoginStartTime;
     private ScheduledFuture<?> shutdownAfterTimeTask;
+    private volatile boolean postLoginHooksFired = false;
+
+    private void firePostLoginHooks() {
+        if (postLoginHooksFired) return;
+        postLoginHooksFired = true;
+        Thread t = new Thread(() -> {
+            for (PostLoginHook hook : ServiceLoader.load(PostLoginHook.class)) {
+                try {
+                    hook.onLoginCompleted();
+                } catch (Throwable ex) {
+                    logger.error("PostLoginHook {} failed: {}", hook.getClass().getName(), ex);
+                }
+            }
+        }, "ibc-post-login-hook");
+        t.setDaemon(true);
+        t.start();
+    }
 
     void secondFactorAuthenticationDialogClosed() {
         if (LoginStartTime == null) {
@@ -118,7 +145,7 @@ public abstract class LoginManager {
         final Duration d = Duration.between(LoginStartTime, Instant.now());
         LoginStartTime = null;
         
-        Utils.logToConsole("Duration since login: " + d.getSeconds() + " seconds");
+        logger.info("Duration since login: {} seconds", d.getSeconds());
 
         if (d.getSeconds() < SecondFactorAuthenticationTimeout) {
             // The 2FA prompt must have been handled by the user, so authentication
@@ -135,19 +162,19 @@ public abstract class LoginManager {
                 return;
             }
 
-            Utils.logToConsole("If login has not completed, IBC will exit in " + exitInterval + " seconds");
+            logger.info("If login has not completed, IBC will exit in {} seconds", exitInterval);
             restartAfterTime(exitInterval, "IBC closing because login has not completed after Second Factor Authentication");
             return;
         }
         
         if (!reloginPermitted()) {
-            Utils.logToConsole("Re-login after second factor authentication timeout not required");
+            logger.info("Re-login after second factor authentication timeout not required");
             return;
         }
         
         // The 2FA prompt hasn't been handled by the user, so we re-initiate the login
         // sequence after a short delay
-        Utils.logToConsole("Re-login after second factor authentication timeout in 5 second");
+        logger.info("Re-login after second factor authentication timeout in 5 second");
         MyScheduledExecutorService.getInstance().schedule(() -> {
             GuiDeferredExecutor.instance().execute(
                 () -> {getLoginHandler().initiateLogin(getLoginFrame());}
@@ -170,14 +197,16 @@ public abstract class LoginManager {
             shutdownAfterTimeTask = MyScheduledExecutorService.getInstance().schedule(()->{
                 GuiExecutor.instance().execute(()->{
                     if (getLoginState() == LoginManager.LoginState.LOGGED_IN) {
-                        Utils.logToConsole("Login has already completed - no need for IBC to exit");
+                        logger.info("Login has already completed - no need for IBC to exit");
                         return;
                     }
-                    Utils.exitWithError(ErrorCodes.SECOND_FACTOR_AUTH_LOGIN_TIMED_OUT, message);
+                    logger.error(message);
+                    IbcExit.exit(ErrorCodes.SECOND_FACTOR_AUTH_LOGIN_TIMED_OUT);
                 });
             }, secondsTillShutdown, TimeUnit.SECONDS);
         } catch (Throwable e) {
-            Utils.exitWithException(99999, e);
+            logger.error("An exception has occurred", e);
+            IbcExit.exit(99999);
         }
     }
 

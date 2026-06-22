@@ -18,10 +18,15 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 
 public class ConfigureApiPrecautionsTask implements ConfigurationAction {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigureApiPrecautionsTask.class);
     
     private JDialog configDialog;
     
@@ -78,7 +83,8 @@ public class ConfigureApiPrecautionsTask implements ConfigurationAction {
             doSetting("Bypass No Overfill Protection precaution for destinations where implied natively.", bypassNoOverfillProtectionPrecaution.toLowerCase());
             
         } catch (IbcException e) {
-            Utils.exitWithError(ErrorCodes.UNHANDLED_EXCEPTION, "Can't find API - Precautions settings");
+            logger.error("Can't find API - Precautions settings");
+            IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
         }
         
     }
@@ -91,28 +97,29 @@ public class ConfigureApiPrecautionsTask implements ConfigurationAction {
             case "no":
                 break;
             default:
-                Utils.exitWithError(ErrorCodes.INVALID_SETTING_VALUE, "Invalid setting value for '" + checkBoxText + "'" );
+                logger.error("Invalid setting value for '{}'", checkBoxText);
+                IbcExit.exit(ErrorCodes.INVALID_SETTING_VALUE);
         }
         
         JCheckBox cb = SwingUtils.findCheckBox(configDialog, checkBoxText);
         if (cb == null) {
-            Utils.logToConsole("Checkbox '" + checkBoxText + "' not found");
+            logger.info("Checkbox '{}' not found", checkBoxText);
             return;
         }
         
         if (setting.equals("yes")) {
             if (cb.isSelected()) {
-                Utils.logToConsole("'" + checkBoxText + "' is already selected");
+                logger.info("'{}' is already selected", checkBoxText);
             } else {
                 cb.setSelected(true);
-                Utils.logToConsole("'" + checkBoxText + "' is now selected");
+                logger.info("'{}' is now selected", checkBoxText);
             }
         } else if (setting.equals("no")) {
             if (!cb.isSelected()) {
-                Utils.logToConsole("'" + checkBoxText + "' is already unselected");
+                logger.info("'{}' is already unselected", checkBoxText);
             } else {
                 cb.setSelected(false);
-                Utils.logToConsole("'" + checkBoxText + "' is now unselected");
+                logger.info("'{}' is now unselected", checkBoxText);
             }
         }
     }

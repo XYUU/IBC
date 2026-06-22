@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -29,6 +32,8 @@ import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 
 public class DefaultConfigDialogManager extends ConfigDialogManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultConfigDialogManager.class);
 
     private volatile JDialog configDialog = null;
     private volatile GetConfigDialogTask configDialogTask;
@@ -43,7 +48,7 @@ public class DefaultConfigDialogManager extends ConfigDialogManager {
 
     @Override
     public void logDiagnosticMessage(){
-        Utils.logToConsole("using default config dialog manager");
+        logger.info("using default config dialog manager");
     }
 
     /**
@@ -85,20 +90,20 @@ public class DefaultConfigDialogManager extends ConfigDialogManager {
 
         if (SwingUtilities.isEventDispatchThread()) throw new IllegalStateException();
 
-        Utils.logToConsole("Getting config dialog");
+        logger.info("Getting config dialog");
 
         incrementUsage();
 
         if (configDialog != null) {
-            Utils.logToConsole("Config dialog already found");
+            logger.info("Config dialog already found");
             return configDialog;
         }
 
         synchronized(futureCreationLock) {
             if (configDialogFuture != null) {
-                    Utils.logToConsole("Waiting for config dialog future to complete");
+                    logger.info("Waiting for config dialog future to complete");
             } else {
-                Utils.logToConsole("Creating config dialog future");
+                logger.info("Creating config dialog future");
                 configDialogTask = new GetConfigDialogTask();
                 ExecutorService exec = Executors.newSingleThreadExecutor();
                 configDialogFuture = exec.submit((Callable<JDialog>)configDialogTask);
@@ -112,14 +117,14 @@ public class DefaultConfigDialogManager extends ConfigDialogManager {
             } else {
                 configDialog = configDialogFuture.get(timeout, unit);
             }
-            Utils.logToConsole("Got config dialog from future");
+            logger.info("Got config dialog from future");
             return configDialog;
         } catch (TimeoutException | InterruptedException e) {
             return null;
         } catch (ExecutionException e) {
             Throwable t = e.getCause();
             if (t instanceof IbcException) {
-                Utils.logError("getConfigDialog could not find " + t.getMessage());
+                logger.error("getConfigDialog could not find {}", t.getMessage());
                 return null;
             }
             if (t instanceof RuntimeException) throw (RuntimeException)t;
@@ -192,8 +197,9 @@ public class DefaultConfigDialogManager extends ConfigDialogManager {
         if (openedByUser) return;
         if (usageCount == 0){
             GuiDeferredExecutor.instance().execute(() -> {
-                Utils.logToConsole("Configuration tasks completed");
-                SwingUtils.clickButton(configDialog, "OK");
+                logger.info("Configuration tasks completed");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                SwingUtils.clickButtonByBundle(configDialog, "twslaunch.ji18n.LauncherLanguage", "OK");
                 GuiDeferredExecutor.instance().execute(() -> MainWindowManager.mainWindowManager().iconizeIfRequired());
             });
         }

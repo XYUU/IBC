@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -27,6 +30,8 @@ import java.net.Socket;
 import java.net.SocketException;
 
 final class CommandChannel {
+
+    private static final Logger logger = LoggerFactory.getLogger(CommandChannel.class);
 
     private static final String _Prompt = Settings.settings().getString("CommandPrompt", "");
     private static final boolean _SuppressInfo = Settings.settings().getBoolean("SuppressInfoMessages", true);
@@ -47,7 +52,7 @@ final class CommandChannel {
         try {
             if (mSocket == null || mSocket.isClosed()) return;
             
-            Utils.logToConsole("Closing command channel");
+            logger.info("Closing command channel");
             mSocket.shutdownInput();
             mSocket.shutdownOutput();
 
@@ -61,10 +66,10 @@ final class CommandChannel {
             mSocket = null;
         } catch (SocketException e) {
             // the socket was reset by the client - ignore
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         } catch (IOException e) {
             // ignore
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         }
     }
 
@@ -80,13 +85,13 @@ final class CommandChannel {
                 cmd = mInstream.readLine();
             }
 
-            if (cmd != null) Utils.logToConsole("CommandServer received command: " + cmd);
+            if (cmd != null) logger.info("CommandServer received command: {}", cmd);
         } catch (SocketException e) {
             // the socket was reset by the client
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
             close();
         } catch (IOException e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
             close();
         }
         return cmd;
@@ -120,7 +125,7 @@ final class CommandChannel {
             mOutstream.flush();
         } catch (SocketException e) {
             // the socket was reset by the client
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -137,7 +142,7 @@ final class CommandChannel {
             return true;
         } catch (IOException e) {
             // this is most likely a result of the user closing the command connection
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
             return false;
         }
     }

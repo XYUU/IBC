@@ -19,7 +19,6 @@
 package ibcalpha.ibc;
 
 import java.awt.Container;
-import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutionException;
@@ -30,14 +29,14 @@ import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class Utils {
 
-    static final DateTimeFormatter _dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+    private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
-    // set these to the defaults, so that we can continue to use them 
-    // even when TWS redirects System.out and System.err to its own logfile
-    private static final PrintStream out = System.out;
-    private static final PrintStream err = System.err;
+    static final DateTimeFormatter _dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
 
     /**
      * Performs a click on the menu item at the specified path, waiting if necessary for the
@@ -75,7 +74,7 @@ class Utils {
             try {
                 if (task.get()) return true;
             } catch (InterruptedException e) {
-                logError("invokeMenuItem task interrupted");
+                logger.error("invokeMenuItem task interrupted");
                 return false;
             } catch (ExecutionException e) {
                 Throwable t = e.getCause();
@@ -90,74 +89,8 @@ class Utils {
         }
     }
 
-    static void exitWithError(int errorCode) {
-        logToConsole("Exiting after error with exit code=" + errorCode);
-        Runtime.getRuntime().halt(errorCode);
-    }
-
-    static void exitWithError(int errorCode, String message) {
-        logError(message);
-        exitWithError(errorCode);
-    }
-
-    static void exitWithException(int errorCode, Throwable t) {
-        logException(t);
-        exitWithError(errorCode);
-    }
-
-    static void exitWithoutError() {
-        System.exit(0);
-    }
-
-    static void logError(String message) {
-        getOutStream().println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        getOutStream().println(formatMessage(message));
-        getOutStream().println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    }
-
-    static void logException(Throwable t) {
-        getOutStream().println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        getOutStream().println(formatMessage("An exception has occurred:"));
-        if (Settings.settings().getBoolean("IncludeStackTraceForExceptions", false)) {
-            t.printStackTrace(getOutStream());
-        } else {
-             getOutStream().println(t.getMessage() + "");
-        }
-        getOutStream().println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    }
-
-    /**
-     * Writes a plain one-line text message to the console.
-     * @param msg
-     * The message to be written
-     */
-    static void logRawToConsole(String msg) {
-        getOutStream().println(msg);
-    }
-
-    /**
-     * Writes a text message prefixed with the current time to the console.
-     * @param msg
-     * The message to be written
-     */
-    static void logToConsole(String msg) {
-        getOutStream().println(formatMessage(msg));
-    }
-
-    static PrintStream getErrStream() {
-        return err;
-    }
-
-    static PrintStream getOutStream() {
-        return out;
-    }
-
     static String formatDate(LocalDateTime date) {
         return _dateFormatter.format(date);
-    }
-    
-    private static String formatMessage(String message) {
-        return _dateFormatter.format(LocalDateTime.now()) + " IBC: " + message;
     }
 
     /**

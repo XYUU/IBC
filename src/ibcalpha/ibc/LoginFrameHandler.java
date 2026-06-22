@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
@@ -25,6 +28,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 final class LoginFrameHandler extends AbstractLoginHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoginFrameHandler.class);
 
     @Override
     public boolean recogniseWindow(Window window) {
@@ -35,10 +40,14 @@ final class LoginFrameHandler extends AbstractLoginHandler {
         // entitled Login, when it's trying to reconnect. (Not sure if this 
         // is still true)
         // Also when doing autorestart there is no login button.
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 40.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 60.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
         return ((SwingUtils.titleEquals(window, "New Login") ||
-                SwingUtils.titleEquals(window, "Login")) &&
-                (SwingUtils.findButton(window, "Log In") != null ||
-                SwingUtils.findButton(window, "Paper Log In") != null ||
+                SwingUtils.titleEqualsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Login")) &&
+                (SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Log_in") != null ||
+                SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Paper_Log_in") != null ||
                 SessionManager.isRestart()));
     }
     
@@ -79,20 +88,20 @@ final class LoginFrameHandler extends AbstractLoginHandler {
 
                 private void setStoreSettingsOnServerCheckbox() {
                     if (Settings.settings().getString("StoreSettingsOnServer", "").length() != 0) {
-                        final String STORE_SETTINGS_ON_SERVER_CHECKBOX = "Use/store settings on server";
-
-                        // we defer setting the checkbox: if we do it inline, TWS's setting 
+                        // we defer setting the checkbox: if we do it inline, TWS's setting
                         // overwrites it
                         GuiDeferredExecutor.instance().execute(() -> {
                             boolean storeSettingsOnServer = Settings.settings().getBoolean("StoreSettingsOnServer", false);
-                            if (! SwingUtils.setCheckBoxSelected(
+                            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                            if (! SwingUtils.findAndSetCheckBoxSelectedByBundle(
                                     window,
-                                    STORE_SETTINGS_ON_SERVER_CHECKBOX,
-                                    storeSettingsOnServer)) {
+                                    storeSettingsOnServer,
+                                    "twslaunch.ji18n.LauncherLanguage", "Store_settings_on_server"
+                                    )) {
                                 // this is expected when autorestarting, so we just log the fact
-                                Utils.logToConsole("could not find control: " + STORE_SETTINGS_ON_SERVER_CHECKBOX + ": this is expected when restarting");
+                                logger.info("could not find control: 'Use/store settings on server' this is expected when restarting");
                             } else {
-                                Utils.logToConsole("Use/store settings on server selected: " + storeSettingsOnServer);
+                                logger.info("Use/store settings on server selected: {}", storeSettingsOnServer);
                             }
                         });
                     }
@@ -117,9 +126,9 @@ final class LoginFrameHandler extends AbstractLoginHandler {
 
     @Override
     protected final boolean setFields(Window window, int eventID) throws IbcException {
-        Utils.logToConsole("Setting user name");
+        logger.info("Setting user name");
         setCredential(window, "IBAPI user name", 0, LoginManager.loginManager().IBAPIUserName());
-        Utils.logToConsole("Setting password");
+        logger.info("Setting password");
         setCredential(window, "IBAPI password", 1, LoginManager.loginManager().IBAPIPassword());
         return true;
     }

@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.AWTEvent;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
@@ -28,6 +31,8 @@ import javax.swing.JFrame;
 
 class TwsListener
         implements AWTEventListener {
+
+    private static final Logger logger = LoggerFactory.getLogger(TwsListener.class);
 
     private final List<WindowHandler> windowHandlers;
 
@@ -61,11 +66,13 @@ class TwsListener
 
                     logWindowStructure(window, eventID, false);
                 } catch (Throwable e) {
-                    Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, e);
+                    logger.error("An exception has occurred", e);
+                    IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
                 }
             });
         } catch (Throwable e) {
-            Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, e);
+            logger.error("An exception has occurred", e);
+            IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
         }
     }
     
@@ -92,7 +99,7 @@ class TwsListener
             case "all":
                 break;
             default:
-                Utils.logError("the LogStructureScope setting '" + logStructureScope + "' is invalid.");
+                logger.error("the LogStructureScope setting '{}' is invalid.", logStructureScope);
                 logStructureScope = "known";
         }
         
@@ -135,7 +142,7 @@ class TwsListener
                 break;
 
             default:
-                Utils.logError("the LogStructureWhen setting is invalid: " + logStructureWhen);
+                logger.error("the LogStructureWhen setting is invalid: {}", logStructureWhen);
                 logStructureWhen = "never";
         }
         
@@ -143,7 +150,7 @@ class TwsListener
     }
 
     static void logWindow(Window window, int eventID) {
-        Utils.logToConsole("detected " + getWindowTypeAndTitle(window) + "; event=" + SwingUtils.windowEventToString(eventID));
+        logger.info("detected {}; event={}", getWindowTypeAndTitle(window), SwingUtils.windowEventToString(eventID));
     }
 
     private static String getWindowTypeAndTitle(Window window) {
@@ -175,8 +182,8 @@ class TwsListener
             ||
             (logStructureWhen.equalsIgnoreCase(SwingUtils.windowEventToString(eventID))))
         {
-            Utils.logToConsole("Window structure for " + getWindowTypeAndTitle(window) + "; event=" + SwingUtils.windowEventToString(eventID));
-            Utils.logRawToConsole(SwingUtils.getWindowStructure(window));
+            logger.info("Window structure for {}; event={}", getWindowTypeAndTitle(window), SwingUtils.windowEventToString(eventID));
+            logger.info(SwingUtils.getWindowStructure(window));
         }
     }
 }

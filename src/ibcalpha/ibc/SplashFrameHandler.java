@@ -56,7 +56,8 @@ public class SplashFrameHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JFrame))  return false;
 
-        return (SwingUtils.titleContains(window, "Starting application..."));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 87.0%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Step9"));
     }
 
 }

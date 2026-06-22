@@ -18,7 +18,12 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DefaultTradingModeManager extends TradingModeManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultTradingModeManager.class);
 
     private String tradingMode;
 
@@ -60,7 +65,8 @@ public class DefaultTradingModeManager extends TradingModeManager {
 
     private void setTradingMode(String value) {
         if (!(value.equalsIgnoreCase(TRADING_MODE_LIVE) || value.equalsIgnoreCase(TRADING_MODE_PAPER))) {
-                Utils.exitWithError(ErrorCodes.INVALID_TRADING_MODE, "Invalid Trading Mode argument or .ini file setting: " + tradingMode);
+                logger.error("Invalid Trading Mode argument or .ini file setting: {}", tradingMode);
+                IbcExit.exit(ErrorCodes.INVALID_TRADING_MODE);
         }
         tradingMode = value;
     }
@@ -70,14 +76,14 @@ public class DefaultTradingModeManager extends TradingModeManager {
 
     @Override
     public void logDiagnosticMessage(){
-        Utils.logToConsole("using default trading mode manager: " + message);
+        logger.info("using default trading mode manager: {}", message);
     }
 
     @Override
     public String getTradingMode() {
         if (fromSettings) {
             setTradingMode( Settings.settings().getString("TradingMode", TRADING_MODE_LIVE));
-            Utils.logToConsole("trading mode from settings: tradingMode=" + tradingMode);
+            logger.info("trading mode from settings: tradingMode={}", tradingMode);
         }
         return tradingMode;
     }

@@ -18,9 +18,14 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.JDialog;
 
 public class ConfigureResetOrderIdsTask implements ConfigurationAction {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigureResetOrderIdsTask.class);
 
     private final boolean resetOrderIds;
     private JDialog configDialog;
@@ -39,7 +44,7 @@ public class ConfigureResetOrderIdsTask implements ConfigurationAction {
         try {
             if (!resetOrderIds) return;
             
-            Utils.logToConsole("Resetting API order ids");
+            logger.info("Resetting API order ids");
 
             if (!SessionManager.isGateway()) {
                 // NB: Gateway never displays the confirmation dialog
@@ -48,9 +53,10 @@ public class ConfigureResetOrderIdsTask implements ConfigurationAction {
 
             Utils.selectApiSettings(configDialog);
 
-            if (!SwingUtils.clickButton(configDialog, "Reset API order ID sequence")) throw new IbcException("could not find 'Reset API order ID sequence' button"); 
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (!SwingUtils.clickButtonByBundle(configDialog, "ji18n.Language", "Reset_API_order_ids")) throw new IbcException("could not find 'Reset API order ID sequence' button");
         } catch (IbcException e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         }
     }
 }

@@ -1,0 +1,19 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'ibc'
+
+include 'fake-ib'
+project(':fake-ib').projectDir = file('samples/fakeIB')
+
+
+include 'ibc-loader'
+project(':ibc-loader').projectDir = file('samples/IbcLoader')
+

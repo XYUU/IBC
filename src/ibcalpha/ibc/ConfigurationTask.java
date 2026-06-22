@@ -18,10 +18,15 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.FutureTask;
 import javax.swing.JDialog;
 
 public class ConfigurationTask {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationTask.class);
 
     private final ConfigurationAction configAction;
 
@@ -50,7 +55,7 @@ public class ConfigurationTask {
 
                 ConfigDialogManager.configDialogManager().releaseConfigDialog();
             } catch (Exception e){
-                Utils.logException(e);
+                logger.error("An exception has occurred", e);
             }
         }
     }

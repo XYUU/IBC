@@ -178,9 +178,7 @@ goto :parse
 
 set PHASE=Checking supplied configuration data
 
-if defined IB_USER_ID set GOT_API_CREDENTIALS=1
 if defined IB_PASSWORD set GOT_API_CREDENTIALS=1
-if defined FIX_USER_ID set GOT_FIX_CREDENTIALS=1
 if defined FIX_PASSWORD set GOT_FIX_CREDENTIALS=1
 
 if defined GOT_FIX_CREDENTIALS (
@@ -435,7 +433,7 @@ if defined GOT_FIX_CREDENTIALS (
 	if defined GOT_API_CREDENTIALS (
 		set HIDDEN_CREDENTIALS="***" "***" "***" "***"
 	) else (
-		set HIDDEN_CREDENTIALS="***" "***"
+		set HIDDEN_CREDENTIALS="****" "****"
 	)
 ) else if defined GOT_API_CREDENTIALS (
 	set HIDDEN_CREDENTIALS="***" "***"

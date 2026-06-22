@@ -6,4 +6,6 @@ build
 makedocs/*/*.aux
 makedocs/*/*.log
 makedocs/*/*.tex
-.*
+.idea
+.gradle
+resources/IBC.jar

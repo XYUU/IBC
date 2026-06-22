@@ -1,0 +1,161 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+def resolveEnv(String path) {
+    if (!path) return ""
+    String resolvedPath = path
+    // 1. 匹配 Linux / Mac 格式的变量，如 $JAVA_HOME 或 ${JAVA_HOME}
+    resolvedPath = resolvedPath.replaceAll(/\$\{?([A-Za-z0-9_]+)\}?/) { match, envName ->
+        return System.getenv(envName) ?: match
+    }
+    return resolvedPath
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:all']
+}
+
+ext {
+    ibHomePath = providers.gradleProperty('ib.home').orElse(providers.environmentVariable('IB_HOME'))
+
+    def configFile = file(ibHomePath.orNull).toPath().resolve(".install4j/i4jparams.conf").toFile()
+    def config = new XmlSlurper().parse(configFile)
+    def variables = config.compilerVariables.variable
+
+    javaOptions = variables.find { it.'@name' == 'javaOptions' }?.'@value'?.text()
+    sharedJreDir1 = variables.find { it.'@name' == 'sharedJreDir1' }?.'@value'?.text()
+    sharedJreDir2 = variables.find { it.'@name' == 'sharedJreDir2' }?.'@value'?.text()
+}
+
+dependencies {
+    def path =  project.ibHomePath.orNull
+    if (path?.trim()) {
+        implementation fileTree(dir: file(path.trim()), include: '**/*.jar')
+    } else {
+        compileOnly project(':fake-ib')
+        compileOnly 'org.slf4j:slf4j-api:2.0.13'
+    }
+}
+
+sourceSets.main.java {
+    srcDir('src')
+}
+
+def generatedVersionFile = file('src/ibcalpha/ibc/IbcVersionInfo.java')
+
+tasks.register('generateIbcVersionInfo') {
+    inputs.property('ibcVersion', version)
+    outputs.file(generatedVersionFile)
+    doLast {
+        def out = generatedVersionFile
+        out.parentFile.mkdirs()
+        out.setText("""// NB: this file is updated by the Ant build script
+
+package ibcalpha.ibc;
+
+public class IbcVersionInfo {
+    public final static String IBC_VERSION = "${version}";
+}
+""", 'UTF-8')
+    }
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = 'IBC.jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('copyJarToResources', Copy) {
+    group = 'distribution'
+    description = 'Copy build/libs/IBC.jar into resources/ (Ant build.xml jar target wrote there).'
+    dependsOn jar
+    dependsOn generateBat
+
+    from jar.archiveFile
+    into layout.projectDirectory.dir('resources')
+}
+
+tasks.withType(JavaExec).configureEach {
+
+    standardOutput = System.out
+    errorOutput = System.err
+
+    // 生成 IBC session id（等价于 %RANDOM%%RANDOM%）
+    def rnd = new Random()
+    def ibcSessionId = "${rnd.nextInt(32768)}${rnd.nextInt(32768)}"
+
+    // -----------------------------
+    // 读取 tws.vmoptions 文件内容
+    // -----------------------------
+    def extraJvmArgs = []
+
+    def vmOptionsFile = file(ibHomePath.orNull).toPath().resolve("tws.vmoptions").toFile()
+    if (vmOptionsFile.exists()) {
+        println "Loading JVM options from: ${vmOptionsFile}"
+        vmOptionsFile.eachLine { line ->
+            def trimmed = line.trim()
+            if (trimmed && !trimmed.startsWith("#")) {
+                extraJvmArgs += trimmed
+            }
+        }
+    } else {
+        println "WARNING: tws.vmoptions not found at ${vmOptionsFile}"
+    }
+
+    // 只有 Java 9+ 才需要这些 opens/exports
+    def moduleOpens = []
+    if (java.targetCompatibility.isJava9Compatible()) {
+        moduleOpens.addAll(javaOptions.tokenize())
+        def jreDir = file("${resolveEnv(sharedJreDir1)}")
+        if (!jreDir.exists()) {
+            jreDir = file("${resolveEnv(sharedJreDir2)}")
+        }
+        def sysEnv = new HashMap<>(System.getenv())
+        sysEnv['JAVA_HOME'] = file(jreDir).absolutePath
+        environment sysEnv
+    } else {
+        println "Java 8 detected — skipping --add-opens/--add-exports"
+    }
+    def jtsConfigDir = '${USERPROFILE}/Documents/IBC/data/${TWSUSERID}'
+    jvmArgs = moduleOpens + [
+            "-Dtwslaunch.autoupdate.serviceImpl=com.ib.tws.twslaunch.install4j.Install4jAutoUpdateService",
+            "-Dchannel=latest",
+            "-Dexe4j.isInstall4j=true",
+            "-Dinstall4jType=standalone",
+            "-DjtsConfigDir=${resolveEnv(jtsConfigDir)}",
+            // 动态生成的 session id
+            "-Dibcsessionid=${ibcSessionId}"
+    ] + extraJvmArgs
+
+}
+
+tasks.register('generateBat', Copy) {
+    from('samples/templates') {
+        include '*.template'
+        rename { String fileName -> fileName.replace('.template', '') }
+    }
+    into layout.projectDirectory.dir('resources/scripts')
+    filter(ReplaceTokens, tokens: [
+            jvmOptions: javaOptions
+    ])
+}
+

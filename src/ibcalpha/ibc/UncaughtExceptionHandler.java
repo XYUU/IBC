@@ -18,11 +18,17 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(UncaughtExceptionHandler.class);
 
     @Override
     public void uncaughtException(Thread thread, Throwable t) {
-        Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, t);
+        logger.error("An exception has occurred", t);
+        IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
     }
 
 }

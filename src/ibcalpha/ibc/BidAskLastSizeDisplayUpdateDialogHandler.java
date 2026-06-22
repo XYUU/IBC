@@ -18,12 +18,17 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 
 public class BidAskLastSizeDisplayUpdateDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(BidAskLastSizeDisplayUpdateDialogHandler.class);
 
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -43,9 +48,10 @@ public class BidAskLastSizeDisplayUpdateDialogHandler implements WindowHandler {
             case "ignore":
                 return;
             case "accept":
-                JCheckBox cb = (SwingUtils.findCheckBox(window, "Don't display this message again."));
+                // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                JCheckBox cb = (SwingUtils.findCheckBoxByBundle(window, "ji18n.Language", "Hide_Msg"));
                 if (cb == null) {
-                    Utils.logError("could not set 'Don't display this message again': checkbox not found");
+                    logger.error("could not set 'Don't display this message again': checkbox not found");
                 } else {
                     cb.setSelected(true);
                 }
@@ -53,12 +59,13 @@ public class BidAskLastSizeDisplayUpdateDialogHandler implements WindowHandler {
             case "defer":
                 break;
             default:
-                Utils.logError("AcceptBidAskLastSizeDisplayUpdateNotification setting is invalid: " + accept);
+                logger.error("AcceptBidAskLastSizeDisplayUpdateNotification setting is invalid: {}", accept);
                 return;
         }
 
-        if (! SwingUtils.clickButton(window, "I understand - display market data")) {
-            Utils.logError("could not dismiss AcceptBidAskLastSizeDisplayUpdateNotification - button not found");
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "ji18n.Language", "I_understand_display_market_data")) {
+            logger.error("could not dismiss AcceptBidAskLastSizeDisplayUpdateNotification - button not found");
         }
 
         String sendMarketDataInLots = Settings.settings().getString("SendMarketDataInLotsForUSstocks", "");
@@ -70,7 +77,8 @@ public class BidAskLastSizeDisplayUpdateDialogHandler implements WindowHandler {
     @Override
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
-        return (SwingUtils.findTextPane(window, "Bid, Ask and Last Size Display Update") != null );
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.findTextPaneByBundle(window, "ji18n.Language", "Bid_Ask_Last_Size_Display_Update") != null );
     }
     
 }

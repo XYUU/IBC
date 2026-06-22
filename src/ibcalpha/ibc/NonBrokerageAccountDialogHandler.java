@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class NonBrokerageAccountDialogHandler  implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(NonBrokerageAccountDialogHandler.class);
     @Override
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
@@ -46,15 +51,17 @@ public class NonBrokerageAccountDialogHandler  implements WindowHandler {
 
         GuiDeferredExecutor.instance().execute(() -> MainWindowManager.mainWindowManager().iconizeIfRequired());
 
-        if (! SwingUtils.clickButton(window, "I understand and accept")) {
-            Utils.logError("could not dismiss non-brokerage account warning dialog.");
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "ji18n.Language", "I_understand_and_accept")) {
+            logger.error("could not dismiss non-brokerage account warning dialog.");
         }
     }
 
     @Override
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
-        return (SwingUtils.findLabel(window, "This is not a brokerage account") != null );
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 41.9%
+        return (SwingUtils.findLabelByBundle(window, "ji18n.Language", "phylumbannermain_Simulated_Trading") != null );
     }
 
 }

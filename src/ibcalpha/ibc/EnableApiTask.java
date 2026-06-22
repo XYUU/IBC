@@ -18,10 +18,15 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 
 class EnableApiTask implements ConfigurationAction{
+
+    private static final Logger logger = LoggerFactory.getLogger(EnableApiTask.class);
 
     private final CommandChannel mChannel;
 
@@ -33,24 +38,26 @@ class EnableApiTask implements ConfigurationAction{
 
     @Override public void run() {
         try {
-            Utils.logToConsole("Doing ENABLEAPI configuration");
+            logger.info("Doing ENABLEAPI configuration");
 
             Utils.selectApiSettings(configDialog);
 
-            JCheckBox cb = SwingUtils.findCheckBox(configDialog, "Enable ActiveX and Socket Clients");
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            JCheckBox cb = SwingUtils.findCheckBoxByBundle(configDialog, "ji18n.Language", "Conf_Item_23_Txt");
             if (cb == null) throw new IbcException("could not find Enable ActiveX checkbox");
 
             if (!cb.isSelected()) {
                 cb.doClick();
-                SwingUtils.clickButton(configDialog, "OK");
-                Utils.logToConsole("TWS has been configured to accept API connections");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                SwingUtils.clickButtonByBundle(configDialog, "twslaunch.ji18n.LauncherLanguage", "OK");
+                logger.info("TWS has been configured to accept API connections");
                 mChannel.writeAck("configured");
             } else {
-                Utils.logToConsole("TWS is already configured to accept API connections");
+                logger.info("TWS is already configured to accept API connections");
                 mChannel.writeAck("already configured");
             }
         } catch (IbcException e) {
-            Utils.logError("CommandServer: " + e.getMessage());
+            logger.error("CommandServer: {}", e.getMessage());
             mChannel.writeNack(e.getMessage());
         }
     }

@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 class BlindTradingWarningDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(BlindTradingWarningDialogHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -35,19 +40,25 @@ class BlindTradingWarningDialogHandler implements WindowHandler {
     public void handleWindow(Window window, int eventID) {
         if (! Settings.settings().getBoolean("AllowBlindTrading", false)) return;
 
-        if (! SwingUtils.clickButton(window, "Override and Transmit") &&
-            ! SwingUtils.clickButton(window, "Yes")) {
-            Utils.logError("could not dismiss blind trading warning dialog.");
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "ji18n.Language", "Override_and_Transmit") &&
+            ! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "yes")) {
+            logger.error("could not dismiss blind trading warning dialog.");
         }
     }
 
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
-        return ((SwingUtils.titleContains(window, "Order Preview")) &&
-                SwingUtils.findTextPane(window, "blind trading") != null)
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0% 第4291行
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 46.2%
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 46.2%
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return ((SwingUtils.titleContainsByBundle(window, "ji18n.Language", "Order_Preview")) &&
+                SwingUtils.findTextPaneByBundle(window, "ji18n.Language", "No_market_data_disclaimer") != null)
                 || 
-                ((SwingUtils.findLabel(window, "blind trading") != null &&
-                SwingUtils.findLabel(window, "Are you sure you want to submit this order?") != null));
+                ((SwingUtils.findLabelByBundle(window, "ji18n.Language", "No_market_data_disclaimer") != null &&
+                SwingUtils.findLabelByBundle(window, "ji18n.Language", "Are_you_sure_to_submit_order") != null));
     }
 
 }

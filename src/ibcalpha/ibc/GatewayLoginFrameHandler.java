@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
@@ -25,22 +28,31 @@ import javax.swing.JToggleButton;
 
 final class GatewayLoginFrameHandler extends AbstractLoginHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GatewayLoginFrameHandler.class);
+
     @Override
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JFrame)) return false;
 
-        return ((SwingUtils.titleContains(window, "IBKR Gateway") ||
-                    SwingUtils.titleContains(window, "IB Gateway") || 
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 58.3%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 40.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 70.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 60.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return ((SwingUtils.titleContains(window, "IBKR Gateway")  ||
+                    SwingUtils.titleContains(window, "IB Gateway") ||
                     SwingUtils.titleContains(window, "Interactive Brokers Gateway")) &&
-               (SwingUtils.findButton(window, "Login") != null ||
-                SwingUtils.findButton(window, "Log In") != null ||          // TWS 974+
-                SwingUtils.findButton(window, "Paper Log In") != null));    // TWS 974+
+               (SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Login") != null ||
+                SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Log_in") != null ||          // TWS 974+
+                SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Paper_Log_in") != null));    // TWS 974+
     }
 
     @Override
     protected final boolean initialise(final Window window, int eventID) throws IbcException {
         selectGatewayMode(window);
-        if (SwingUtils.findLabel(window, "Trading Mode") != null)  {
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.findLabelByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Trading_Mode") != null)  {
             setTradingMode(window);
         }
         return true;
@@ -92,18 +104,18 @@ final class GatewayLoginFrameHandler extends AbstractLoginHandler {
     @Override
     protected final boolean setFields(Window window, int eventID) throws IbcException {
         if (SessionManager.isFIX()) {
-            Utils.logToConsole("Setting FIX user name");
+            logger.info("Setting FIX user name");
             setCredential(window, "FIX user name", 0, LoginManager.loginManager().FIXUserName());
-            Utils.logToConsole("Setting FIX password");
+            logger.info("Setting FIX password");
             setCredential(window, "FIX password", 1, LoginManager.loginManager().FIXPassword());
-            Utils.logToConsole("Setting API user name");
+            logger.info("Setting API user name");
             setCredential(window, "IBAPI user name", 2, LoginManager.loginManager().IBAPIUserName());
-            Utils.logToConsole("Setting API password");
+            logger.info("Setting API password");
             setCredential(window, "IBAPI password", 3, LoginManager.loginManager().IBAPIPassword());
         } else {
-            Utils.logToConsole("Setting user name");
+            logger.info("Setting user name");
             setCredential(window, "IBAPI user name", 0, LoginManager.loginManager().IBAPIUserName());
-            Utils.logToConsole("Setting password");
+            logger.info("Setting password");
             setCredential(window, "IBAPI password", 1, LoginManager.loginManager().IBAPIPassword());
         }
         return true;
@@ -118,22 +130,25 @@ final class GatewayLoginFrameHandler extends AbstractLoginHandler {
     }
 
     private void switchToFIX(Window window) throws IbcException {
-        JToggleButton button = SwingUtils.findToggleButton(window, "FIX CTCI");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        JToggleButton button = SwingUtils.findToggleButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "FIX");
         if (button == null) throw new IbcException("FIX CTCI selector");
 
         if (! button.isSelected()) {
-            Utils.logToConsole("Clicking FIX CTCI selector");
+            logger.info("Clicking FIX CTCI selector");
             button.doClick();
         }
     }
 
     private void switchToIBAPI(Window window) throws IbcException {
-        JToggleButton button = SwingUtils.findToggleButton(window, "IB API");
-        if (button == null) button = SwingUtils.findToggleButton(window, "TWS/API") ;
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        JToggleButton button = SwingUtils.findToggleButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "TWS_API");
+        if (button == null) // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 42.9%
+            button = SwingUtils.findToggleButton(window, "TWS/API") ;
         if (button == null) throw new IbcException("IB API selector");
 
         if (! button.isSelected()) {
-            Utils.logToConsole("Clicking IB API selector");
+            logger.info("Clicking IB API selector");
             button.doClick();
         }
     }

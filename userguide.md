@@ -12,7 +12,7 @@ IMPORTANT
 >
 > To configure this behaviour use the `AutoRestart` setting in the `Lock and
 > Exit` section of the TWS/Gateway configuration dialog. Alternatively use the
-> `AutoRestartTime` setting in `config.ini`.
+> `AutoRestartTime` setting in `config.properties`.
 >
 > This support for auto-restart can lead to confusion if you sometimes want to
 > start TWS/Gateway without using IBC. For advice on this, see the section
@@ -66,7 +66,7 @@ for example to tell TWS/Gateway to shut itself down cleanly.
 This User Guide is intended to help you get started with IBC. It does not cover
 every feature in depth.
 
-Note that the configuration file `config.ini` that governs IBC's behaviour
+Note that the configuration file `config.properties` that governs IBC's behaviour
 contains extensive notes that provide more information on the various settings.
 
 ### Acknowledgement
@@ -84,7 +84,7 @@ up and running properly.
 
 1. Install the offline version of Interactive Brokers Trader Workstation
    (see *Interactive Brokers*   *Trader Workstation* in the *Prerequisites*
-   section), and make sure that it uses the English language setting.
+   section), ~~and make sure that it uses the English language setting.~~
 
    **Please note that you MUST download the OFFLINE version of TWS, not the**
    **self-updating version: IBC DOES NOT WORK with the self-updating version**
@@ -106,11 +106,11 @@ up and running properly.
 5. Create an encrypted folder called `ibc` in your personal
    filestore (see *Protecting the Password* in the *Password Security* section).
 
-6. Copy the configuration file (called `config.ini`) from the
+6. Copy the configuration file (called `config.properties`) from the
    IBC installation folder to the encrypted folder created in
    step 4.
 
-7. Edit the `config.ini` file,using a text editor such as Notepad, to set
+7. Edit the `config.properties` file,using a text editor such as Notepad, to set
    your username and password in the `IbLoginId` and `IbPassword` settings.
    It's advisable to use your paper-trading credentials at first to check
    things out, and for this you'll also need to set the `TradingMode` setting.
@@ -154,7 +154,7 @@ up and running properly.
    occur. You will be notified of the log file name during the startup
    sequence. Please include this file when reporting problems with IBC.
 
-10. Now you can edit the configuration file `config.ini` to make any further
+10. Now you can edit the configuration file `config.properties` to make any further
    customisations you need. See *Configuring IBC* for further information.
 
 11. If you did not install TWS and IBC in their default locations,
@@ -243,8 +243,9 @@ download has been installed, the scripts will fail!)
 It is safest to use the 'stable' offline version of TWS rather than the
 'latest' version for live trading: the latter is more likely to have bugs.
 
-IBC needs TWS to operate in English so that it can recognise the
-various dialogues that it interacts with. You can set TWS's language by
+~~IBC needs TWS to operate in English so that it can recognise thevarious dialogues that it interacts with.~~ 
+**English is no longer required. You can now use any language you prefer, and it will not affect IBC. If you encounter any issues while using IBC in a non‑English environment, feel free to report them.**
+You can set TWS's language by
 starting it manually (ie without using IBC) and selecting the language on the
 initial login dialog. TWS will remember this language setting when you
 subsequently start it using IBC.
@@ -260,7 +261,7 @@ program and some additional files, detailed below. There are separate
 ZIP files for Windows, Linux and macOS.
 
 The ZIP file for the latest version should be downloaded from
-[Github](https://github.com/IbcAlpha/IBC/releases).
+[Github](https://github.com/XYUU/IBC/releases).
 Earlier versions can also be downloaded from the same place if need be.
 
 The distribution ZIP file contains:
@@ -268,7 +269,7 @@ The distribution ZIP file contains:
 * [License](LICENSE.txt) text
 * A compiled JAR (named similar to `IBC.jar`), containing the compiled
  Java code for the IBC program
-* A sample configuration file (named similar to `config.ini`)
+* A sample configuration file (named similar to `config.properties`)
 * Top-level script files that run IBC to start TWS or the Gateway. These files
  are specific to the platform (ie Windows, Linux or macOS) to which the
  ZIP file relates
@@ -283,7 +284,7 @@ mentioned above
 
 Source code and build scripts are not included in the distribution ZIPs, as
 they are freely available from the
-[IBC project page](https://github.com/IbcAlpha/IBC) on Github.
+[IBC project page](https://github.com/XYUU/IBC) on Github.
 
 ### Installing IBC
 
@@ -347,13 +348,13 @@ script files to reflect this.
 | -------- | ------------------------- | --------------------------------------|
 | Windows  | IBKR TWS program files    | `C:\Jts`                              |
 |          | IBC program files         | `C:\IBC`                              |
-|          | config.ini                | `%USERPROFILE%\Documents\IBC`         |
+|          | config.properties                | `%USERPROFILE%\Documents\IBC`         |
 | Unix     | IBKR TWS program files    | `/home/<username>/Jts`                |
 |          | IBC program files         | `/opt/ibc`                            |
-|          | config.ini                | `/home/<username>/ibc`                |
+|          | config.properties                | `/home/<username>/ibc`                |
 | macOS    | IBKR TWS program files    | `Users/<username>/Applications`       |
 |          | IBC program files         | `/opt/ibc`                            |
-|          | config.ini                | `Users/<username>/ibc`                |
+|          | config.properties                | `Users/<username>/ibc`                |
 
 Note that you may be able to find third-party Linux packages that allow
 IBC and/or TWS to be installed using a Linux package manager such as `apt`:
@@ -423,7 +424,7 @@ documentation for your distribution.
 ### Configuring IBC
 
 IBC must be supplied with a configuration file. A specimen file called
-config.ini is included in the distribution ZIPs. You will need to edit this
+config.properties is included in the distribution ZIPs. You will need to edit this
 file to include your IBKR username and password, and to ensure that IBC
 behaves in the way that best suits your needs.
 
@@ -431,7 +432,7 @@ You should copy the supplied file from the IBC installation folder
 into the secure location described above before editing it, so that you have
 a clean copy to revert to if need be.
 
-The sample `config.ini` file contains detailed comments on the
+The sample `config.properties` file contains detailed comments on the
 meaning of each configuration property. Many of these have sensible defaults,
 or are only needed in special situations, so to help you get started quickly,
 here is a list of the settings that you are most likely to need to change:
@@ -470,17 +471,17 @@ here is a list of the settings that you are most likely to need to change:
 |                                | TWS/Gateway configuration dialog.           |
 
 
-There are two ways that IBC can locate your edited `config.ini` file.
+There are two ways that IBC can locate your edited `config.properties` file.
 
 - the simplest way is to tell it where to find the file in the script that
   starts IBC. In this way, you can give the configuration file any name you
   like. This is the recommended approach, and the supplied scripts follow this
-  approach. If you want to change the filename from `config.ini`, or if you store
+  approach. If you want to change the filename from `config.properties`, or if you store
   it somewhere other than the default location, you'll have to edit the start
   script to declare its new name and location.
 
 - if you do not specify a configuration file name, IBC will expect to find a
-  file named `config.ini` in the current computer user's private filestore. For
+  file named `config.properties` in the current computer user's private filestore. For
   Windows users, the location is `%USERPROFILE%\Documents\IBC`. For Unix
   users, it is `~/ibc`.
 
@@ -500,7 +501,7 @@ Windows users can execute a shell script in a number of ways, including:
   below for more information about using scheduled tasks)
 
 If you used the default locations to install IBC and TWS, and to store your
-config.ini file, you should not need to edit the shell scripts. If you do need
+config.properties file, you should not need to edit the shell scripts. If you do need
 to change them, they are commented to help you.
 
 ## Other Topics
@@ -526,7 +527,7 @@ However, if you fail to respond to the alert within a fixed period (currently
 3 minutes), you will not then be able to complete your login without manual
 intervention at TWS, and this is where IBC _can_ help. You can canfigure IBC
 to detect such timeouts and re-initiate the login process when this happens.
-To enable this behaviour you need this setting in your `config.ini` file:
+To enable this behaviour you need this setting in your `config.properties` file:
 
 `ReloginAfterSecondFactorAuthenticationTimeout=yes`
 
@@ -601,7 +602,7 @@ At this point it is necessary to start a new task to begin the whole cycle over
 again.
 
 Since there is little point having TWS running after Friday evening (because
-the markets are closed), you can use the `ClosedownAt` setting in `config.ini`
+the markets are closed), you can use the `ClosedownAt` setting in `config.properties`
 to tidily shut down TWS automatically after the Friday trading session has
 finished.
 
@@ -685,7 +686,7 @@ The value you need for the DISPLAY variable will depend on how your system is
 configured.
 
 Starting with IBC 3.8.1, the `twsstart.sh` and `gatewaystart.sh` scripts include
-a check to see if IBC is already running with the same `config.ini` file: if it
+a check to see if IBC is already running with the same `config.properties` file: if it
 is, a new instance is not started.
 
 This enables a more sophisticated crontab entry that will periodically attempt
@@ -696,7 +697,7 @@ to start IBC, but only succeed if it is not already running. For example:
 will try to run gatewaystart.sh every 15 minutes from Monday to Friday. This can
 be useful to restart TWS/Gateway after an unexpected shutdown, or, in
 conjunction with the use of the `ExistingSessionDetectedAction=primaryoverride`
-setting in `config.ini`, to automatically restart it if using the IBKR Mobile
+setting in `config.properties`, to automatically restart it if using the IBKR Mobile
 app or the Client Portal on the IBKR Account Management page causes your
 TWS/Gateway session to be shut down.
 
@@ -707,7 +708,7 @@ automatically.
 
 Starting with IBC 3.20.1, the `twsstartmacos.sh` and `gatewaystartmacos.sh` 
 scripts include a check to see if IBC is already running with the same 
-`config.ini` file: if it is, a new instance is not started.
+`config.properties` file: if it is, a new instance is not started.
 
 This enables a job entry that will periodically attempt to start IBC, but only 
 succeed if it is not already running. For an example `launchd` config, see 
@@ -864,7 +865,7 @@ be influenced by commands from external sources.
 
 To issue a command to the command server, the command source must first
 establish a TCP/IP connection to the relevant port, which is specified in the 
-`CommandServerPort` setting in `config.ini`.
+`CommandServerPort` setting in `config.properties`.
 
 The source then sends the required command (see below) as plain text, and may
 then read the socket for any returned data.
@@ -909,7 +910,7 @@ RESTART
   
 > Note that for Gateway this auto-restart time will still be in force after the
 > restart: to avoid further restarts at that time, you should use the
-> `AutoRestartTime` setting in `config.ini' to override the carried-forward
+> `AutoRestartTime` setting in `config.properties' to override the carried-forward
 > time. Alternatively issue another RESTART command after restart has completed
 > to set the auto-restart time to its usual value.
 
@@ -968,7 +969,7 @@ at:
 If you're convinced you've found a bug in IBC, please report it
 via either the IBC User Group or the GitHub Issue Tracker at:
 
-[https://github.com/IbcAlpha/IBC/issues](https://github.com/IbcAlpha/IBC/issues)
+[https://github.com/XYUU/IBC/issues](https://github.com/XYUU/IBC/issues)
 
 Please provide as much evidence as you can, especially the versions of
 IBC and TWS/Gateway you're using and a full description of the
@@ -990,7 +991,7 @@ Here are the main differences between IBC and IBController:
 
    - in IBController, the configuration settings were held in a file called
     `IBController.ini` by default, whereas the equivalent file in IBC
-	is called `config.ini`
+	is called `config.properties`
 
    - the setting previously called `ForceTwsApiPort` has been renamed
 	`OverrideTwsApiPort`

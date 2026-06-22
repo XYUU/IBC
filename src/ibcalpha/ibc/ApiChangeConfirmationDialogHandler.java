@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 class ApiChangeConfirmationDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(ApiChangeConfirmationDialogHandler.class);
 
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -38,9 +43,10 @@ class ApiChangeConfirmationDialogHandler implements WindowHandler {
     @Override
     public void handleWindow(Window window, int eventID) {
         ConfigDialogManager.configDialogManager().setApiConfigChangeConfirmationHandled();
-        if (SwingUtils.clickButton(window, "Yes")) {
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "yes")) {
         } else {
-            Utils.logError("can't apply new API socket port: 'Yes' button not found");
+            logger.error("can't apply new API socket port: 'Yes' button not found");
         }
     }
 
@@ -48,7 +54,8 @@ class ApiChangeConfirmationDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.findLabel(window, "apply the new socket port setting") != null);
+        // [AST重构审查] 来源Jar: jars/total-2024.jar | 规则: 包含与模糊匹配 | 相似度: 44.7%
+        return (SwingUtils.findLabelByBundle(window, "ji18n.Language", "Gnrl_Socket_Reset_Msg") != null);
     }
 
 }

@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
@@ -45,6 +48,8 @@ import javax.swing.JDialog;
  * 
  */
 public class TradingLoginHandoffDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(TradingLoginHandoffDialogHandler.class);
     final String DIALOG_TITLE = "Trading Login Handoff";
 
     @Override
@@ -66,26 +71,29 @@ public class TradingLoginHandoffDialogHandler implements WindowHandler {
 
         String setting = Settings.settings().getString("ExistingSessionDetectedAction", "manual");
         if (setting.equalsIgnoreCase("primary")) {
-            Utils.logToConsole(String.format(INFO_MESSAGE, "end the other session and continue this one"));
-            if (!SwingUtils.clickButton(window, "Disconnect Other Session"))  {
-                Utils.logError(String.format(COULD_NOT_HANDLE_MESSAGE, "the 'Disconnect Other Session' button wasn't found."));
+            logger.info(String.format(INFO_MESSAGE, "end the other session and continue this one"));
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Disconnect_Other_Session"))  {
+                logger.error(String.format(COULD_NOT_HANDLE_MESSAGE, "the 'Disconnect Other Session' button wasn't found."));
             }
         } else if (setting.equalsIgnoreCase("primaryoverride")) {
-            Utils.exitWithError(ErrorCodes.INVALID_STATE, String.format(ERROR_MESSAGE, "ExistingSessionDetectedAction=primaryoverride"));
+            logger.error(String.format(ERROR_MESSAGE, "ExistingSessionDetectedAction=primaryoverride"));
+            IbcExit.exit(ErrorCodes.INVALID_STATE);
         } else if (setting.equalsIgnoreCase("secondary")) {
-            Utils.exitWithError(ErrorCodes.INVALID_STATE, String.format(ERROR_MESSAGE, "ExistingSessionDetectedAction=secondary"));
+            logger.error(String.format(ERROR_MESSAGE, "ExistingSessionDetectedAction=secondary"));
+            IbcExit.exit(ErrorCodes.INVALID_STATE);
         } else if (setting.equalsIgnoreCase("manual")) {
-            Utils.logToConsole(String.format(INFO_MESSAGE, "user must choose whether to continue with this session"));
+            logger.info(String.format(INFO_MESSAGE, "user must choose whether to continue with this session"));
             // nothing to do
         } else {
-            Utils.logError(String.format(COULD_NOT_HANDLE_MESSAGE, "the 'ExistingSessionDetectedAction' setting is invalid."));
+            logger.error(String.format(COULD_NOT_HANDLE_MESSAGE, "the 'ExistingSessionDetectedAction' setting is invalid."));
         }
     }
 
     @Override
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
-
-        return (SwingUtils.titleContains(window, DIALOG_TITLE));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window,"twslaunch.ji18n.LauncherLanguage", "Trading_Login_Handoff"));
     }
 }

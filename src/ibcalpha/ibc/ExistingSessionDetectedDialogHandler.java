@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class ExistingSessionDetectedDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExistingSessionDetectedDialogHandler.class);
 
     private boolean attempted;
 
@@ -50,20 +55,22 @@ public class ExistingSessionDetectedDialogHandler implements WindowHandler {
             case SECONDARY:
                 break;
             default:
-                Utils.logToConsole("ExistingSessionDetectedAction has an invalid value: " + setting + ": assuming 'secondary'");
+                logger.info("ExistingSessionDetectedAction has an invalid value: {}: assuming 'secondary'", setting);
                 setting = SECONDARY;
         }
 
         if (setting.equals(MANUAL)) {
-            Utils.logToConsole("User must choose whether to continue with this session (scenario 1)");
+            logger.info("User must choose whether to continue with this session (scenario 1)");
             // nothing to do
             return;
         }
 
         if (setting.equals(SECONDARY)) {
-            Utils.logToConsole("End this session and let the other session proceed (scenario 2)");
-            if (!SwingUtils.clickButton(window, "Cancel") && !SwingUtils.clickButton(window, "Exit Application")) {
-                Utils.logError("could not handle 'Existing session detected' dialog because the 'Cancel' or 'Exit Application' button wasn't found.");
+            logger.info("End this session and let the other session proceed (scenario 2)");
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Cancel") && !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Exit_Application")) {
+                logger.error("could not handle 'Existing session detected' dialog because the 'Cancel' or 'Exit Application' button wasn't found.");
             }
             return;
         }
@@ -102,16 +109,21 @@ public class ExistingSessionDetectedDialogHandler implements WindowHandler {
             */
             if (!attempted) {
                 attempted = true;
-                Utils.logToConsole("Don't know the type of the other session, so continue this one (scenario 3)");
-                if (!SwingUtils.clickButton(window, "OK") &&
-                        !SwingUtils.clickButton(window, "Continue Login") &&
-                        !SwingUtils.clickButton(window, "Reconnect This Session"))  {
-                    Utils.logError("could not handle 'Existing session detected' dialog because the 'OK' or 'Continue Login' or 'Reconnect This Session' button wasn't found.");
+                logger.info("Don't know the type of the other session, so continue this one (scenario 3)");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK") &&
+                        !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Continue_Login") &&
+                        !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Reconnect_This_Session"))  {
+                    logger.error("could not handle 'Existing session detected' dialog because the 'OK' or 'Continue Login' or 'Reconnect This Session' button wasn't found.");
                 }
             } else {
-                Utils.logToConsole("Other session must be primary or primary override, so end this session and let the other one proceed (scenario 4)");
-                if (!SwingUtils.clickButton(window, "Cancel") && !SwingUtils.clickButton(window, "Exit Application")) {
-                    Utils.logError("could not handle 'Existing session detected' dialog because the 'Cancel' or 'Exit Application' button wasn't found.");
+                logger.info("Other session must be primary or primary override, so end this session and let the other one proceed (scenario 4)");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Cancel") && !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Exit_Application")) {
+                    logger.error("could not handle 'Existing session detected' dialog because the 'Cancel' or 'Exit Application' button wasn't found.");
                 }
             }
         } else {
@@ -123,22 +135,28 @@ public class ExistingSessionDetectedDialogHandler implements WindowHandler {
                is primary.
             */
             if (setting.equals(PRIMARY)) {
-                Utils.logToConsole("Continue this session and let the other session exit (scenario 5)");
-                if (!SwingUtils.clickButton(window, "OK") &&
-                        !SwingUtils.clickButton(window, "Continue Login") &&
-                        !SwingUtils.clickButton(window, "Reconnect This Session"))  {
-                    Utils.logError("could not handle 'Existing session detected' dialog because the 'OK' or 'Continue Login' or 'Reconnect This Session' button wasn't found.");
+                logger.info("Continue this session and let the other session exit (scenario 5)");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK") &&
+                        !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Continue_Login") &&
+                        !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Reconnect_This_Session"))  {
+                    logger.error("could not handle 'Existing session detected' dialog because the 'OK' or 'Continue Login' or 'Reconnect This Session' button wasn't found.");
                 }
             } else if (setting.equals(PRIMARY_OVERRIDE)) {
-                Utils.logToConsole("Other session may be primary, so end this session and let the other one proceed (scenario 6)");
+                logger.info("Other session may be primary, so end this session and let the other one proceed (scenario 6)");
 
                 // ideally we'd just click the "Exit Application" button, but TWS doesn't react to
                 // it properly in these circumstances, so we have to click the button and then exit the program
-                if (!SwingUtils.clickButton(window, "Cancel") && !SwingUtils.clickButton(window, "Exit Application")) {
-                    Utils.logError("could not handle 'Existing session detected' dialog because the 'Cancel' or 'Exit Application' button wasn't found.");
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Cancel") && !SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Exit_Application")) {
+                    logger.error("could not handle 'Existing session detected' dialog because the 'Cancel' or 'Exit Application' button wasn't found.");
                 }
             } else {
-                Utils.exitWithError(ErrorCodes.INVALID_STATE, "Unexpected setting value: " + setting);
+                logger.error("Unexpected setting value: {}", setting);
+                IbcExit.exit(ErrorCodes.INVALID_STATE);
             }
         }
     }
@@ -146,6 +164,7 @@ public class ExistingSessionDetectedDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Existing session detected"));
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Existing_session_detected"));
     }
 }

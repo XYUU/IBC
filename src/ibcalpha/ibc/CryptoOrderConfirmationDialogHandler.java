@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class CryptoOrderConfirmationDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(CryptoOrderConfirmationDialogHandler.class);
     
     @Override
     public boolean filterEvent(Window window, int eventId) {
@@ -42,19 +47,21 @@ public class CryptoOrderConfirmationDialogHandler implements WindowHandler {
             case "manual":
                 break;
             case "transmit":
-                if (SwingUtils.clickButton(window, "Transmit")) {
+                // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 匹配开头 | 相似度: 57.1%
+                if (SwingUtils.clickButtonByBundle(window, "ji18n.Language", "Transmit_Order")) {
                 } else {
-                    Utils.logError("could not confirm cryptocurrency order because we could not find the Transmit button");
+                    logger.error("could not confirm cryptocurrency order because we could not find the Transmit button");
                 }
                 break;
             case "cancel":
-                if (SwingUtils.clickButton(window, "Cancel")) {
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Cancel_JFileChooser")) {
                 } else {
-                    Utils.logError("could not cancel cryptocurrency order because we could not find the Cancel button");
+                    logger.error("could not cancel cryptocurrency order because we could not find the Cancel button");
                 }
                 break;
             default:
-                Utils.logError("ConfirmCryptoCurrencyOrders setting is invalid");
+                logger.error("ConfirmCryptoCurrencyOrders setting is invalid");
         }
     }
 
@@ -62,7 +69,8 @@ public class CryptoOrderConfirmationDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Cryptocurrency order confirmation"));
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "ji18n.Language", "Crypto_order_confirmation_api_title"));
     }
     
 }

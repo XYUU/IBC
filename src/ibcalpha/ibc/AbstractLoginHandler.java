@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.TimeUnit;
@@ -27,11 +30,13 @@ import javax.swing.JLabel;
 
 public abstract class AbstractLoginHandler implements WindowHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractLoginHandler.class);
+
     @Override
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
-                Utils.logToConsole("Login dialog WINDOW_OPENED: LoginState is " + LoginManager.loginManager().getLoginState().toString());
+                logger.info("Login dialog WINDOW_OPENED: LoginState is {}", LoginManager.loginManager().getLoginState().toString());
                 switch (LoginManager.loginManager().getLoginState()) {
                     case LOGGED_IN:
                         return false;
@@ -80,17 +85,19 @@ public abstract class AbstractLoginHandler implements WindowHandler {
             if (!setFields(window, WindowEvent.WINDOW_OPENED)) return;
             if (!preLogin(window, WindowEvent.WINDOW_OPENED)) return;
 
-            Utils.logToConsole("Login attempt: " + ++loginAttemptNumber);
+            logger.info("Login attempt: {}", ++loginAttemptNumber);
             doLogin(window);
         } catch (IbcException e) {
-            Utils.exitWithError(ErrorCodes.CANT_FIND_CONTROL, "could not login: could not find control: " + e.getMessage());
+            logger.error("could not login: could not find control: {}", e.getMessage());
+            IbcExit.exit(ErrorCodes.CANT_FIND_CONTROL);
         }
     }
 
     private void doLogin(final Window window) throws IbcException {
         
         // this JLabel is only present for the 1016+ versions
-        final JLabel initialTitleLabel = SwingUtils.findLabel(window, "LOGIN");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(忽略大小写) | 相似度: 100.0%
+        final JLabel initialTitleLabel = SwingUtils.findLabelByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Login");
         
         GuiDeferredExecutor.instance().execute(() -> {
             final JButton loginButton = findLoginButton(window);
@@ -115,7 +122,7 @@ public abstract class AbstractLoginHandler implements WindowHandler {
             // when this happens, we can pass the window to the SecondFactorAuthenticationDialogHandler
             // to be actioned.
 
-            Utils.logToConsole("Waiting for Login frame to become SecondFactorAuthenticationDialog");
+            logger.info("Waiting for Login frame to become SecondFactorAuthenticationDialog");
             MyScheduledExecutorService.getInstance().schedule(
                     () -> {
                         checkChangeToSecondFactorAuthenticationDialog(window);
@@ -125,11 +132,12 @@ public abstract class AbstractLoginHandler implements WindowHandler {
     }
 
     private void checkChangeToSecondFactorAuthenticationDialog(Window window) {
-        JLabel currentTitleLabel = SwingUtils.findLabel(window, "SECOND FACTOR AUTHENTICATION");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(忽略大小写) | 相似度: 100.0%
+        JLabel currentTitleLabel = SwingUtils.findLabelByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Second_Factor_Auth");
         if (currentTitleLabel != null) {
             // the login frame has now become the 2FA dialog, so invoke the 
             // handler for that as if it had just been opened
-            Utils.logToConsole("Login frame has now become SecondFactorAuthenticationDialog");
+            logger.info("Login frame has now become SecondFactorAuthenticationDialog");
             TwsListener.logWindow(window, WindowEvent.WINDOW_OPENED);
             TwsListener.logWindowStructure(window, WindowEvent.WINDOW_OPENED, true);
             SecondFactorAuthenticationDialogHandler.getInstance().handleWindow(window, WindowEvent.WINDOW_OPENED);
@@ -153,9 +161,12 @@ public abstract class AbstractLoginHandler implements WindowHandler {
     protected abstract boolean isPasswordDisabledOrAbsent(Window window);
 
     private JButton findLoginButton(final Window window) {
-        JButton b = SwingUtils.findButton(window, "Login");
-        if (b == null) b = SwingUtils.findButton(window, "Log In");
-        if (b == null) b = SwingUtils.findButton(window, "Paper Log In");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 60.0%
+        JButton b = SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Login");
+        if (b == null) // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            b = SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Log_in");
+        if (b == null) // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            b = SwingUtils.findButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Paper_Log_in");
         return b;
     }
 
@@ -173,21 +184,25 @@ public abstract class AbstractLoginHandler implements WindowHandler {
     protected final boolean setTradingMode(final Window window) {
         String tradingMode = TradingModeManager.tradingModeManager().getTradingMode();
 
-        if (SwingUtils.findToggleButton(window, "Live Trading") != null && 
-                SwingUtils.findToggleButton(window, "Paper Trading") != null) {
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.findToggleButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Live_Trading") != null &&
+                SwingUtils.findToggleButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Paper_Trading") != null) {
             // TWS 974 onwards uses toggle buttons rather than a combo box
-            Utils.logToConsole("Setting Trading mode = " + tradingMode);
+            logger.info("Setting Trading mode = {}", tradingMode);
             if (tradingMode.equalsIgnoreCase(TradingModeManager.TRADING_MODE_LIVE)) {
-                SwingUtils.findToggleButton(window, "Live Trading").doClick();
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                SwingUtils.findToggleButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Live_Trading").doClick();
             } else {
-                SwingUtils.findToggleButton(window, "Paper Trading").doClick();
+                // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                SwingUtils.findToggleButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Paper_Trading").doClick();
             }
             return true;
         } else {
             // the dialog appears to have been deconstructed, stop tidily
             // and do a cold restart
             
-            Utils.logToConsole("Login dialog has been invalidated - initiate cold restart");
+            logger.info("Login dialog has been invalidated - initiate cold restart");
             MyCachedThreadPool.getInstance().execute(new StopTask(null, true, "Login Error dialog encountered"));
             return false;
         }

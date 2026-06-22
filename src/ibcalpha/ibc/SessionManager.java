@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,6 +28,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.JFrame;
 
 public class SessionManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
     
     public static void initialise(boolean isGateway) {
         _isGateway = isGateway;
@@ -37,13 +42,13 @@ public class SessionManager {
     
     private static boolean _isFIX = false;
     public static boolean isFIX() {
-        if (!_isSessionStarted) Utils.exitWithError(ErrorCodes.INVALID_STATE, "isFix() called before session has started");
+        if (!_isSessionStarted) { logger.error("isFix() called before session has started"); IbcExit.exit(ErrorCodes.INVALID_STATE); }
         return _isFIX;
     }
 
     private static boolean _isRestart;
     static boolean isRestart() {
-        if (!_isSessionStarted) Utils.exitWithError(ErrorCodes.INVALID_STATE, "isRestart() called before session has started");
+        if (!_isSessionStarted) { logger.error("isRestart() called before session has started"); IbcExit.exit(ErrorCodes.INVALID_STATE); }
         return _isRestart;
     }
     
@@ -57,17 +62,18 @@ public class SessionManager {
         _isRestart = ! (System.getProperties().getProperty("restart", "").isEmpty());
         int loginDialogDisplayTimeout = Settings.settings().getInt("LoginDialogDisplayTimeout", 60);
         if (_isRestart){
-            Utils.logToConsole("Re-starting session");
+            logger.info("Re-starting session");
             // TWS/Gateway will re-establish the session with no intervention from IBC needed
         } else {
-            Utils.logToConsole("Starting session: will exit if login dialog is not displayed within " + loginDialogDisplayTimeout + " seconds");
+            logger.info("Starting session: will exit if login dialog is not displayed within {} seconds", loginDialogDisplayTimeout);
             MyScheduledExecutorService.getInstance().schedule(()->{
                 GuiExecutor.instance().execute(()->{
                     if (LoginManager.loginManager().getLoginState() != LoginManager.LoginState.LOGGED_OUT) {
                         // Login diaog has been shown - no need for IBC to exit
                         return;
                     }
-                    Utils.exitWithError(ErrorCodes.LOGIN_DIALOG_DISPLAY_TIMED_OUT, "IBC closing after TWS/Gateway failed to display login dialog");
+                    logger.error("IBC closing after TWS/Gateway failed to display login dialog");
+                    IbcExit.exit(ErrorCodes.LOGIN_DIALOG_DISPLAY_TIMED_OUT);
                 });
             }, loginDialogDisplayTimeout, TimeUnit.SECONDS);
         }

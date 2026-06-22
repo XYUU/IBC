@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -38,10 +41,12 @@ import javax.swing.JPanel;
 class RestartTask
         implements Runnable {
 
+    private static final Logger logger = LoggerFactory.getLogger(RestartTask.class);
+
     private static final SwitchLock _Running = new SwitchLock();
 
     private final CommandChannel mChannel;
-    
+
     private final boolean mPauseOnly;
 
     private final String mVerb;
@@ -58,7 +63,7 @@ class RestartTask
     @Override
     public void run() {
         if (! _Running.set()) {
-            Utils.logToConsole(mVerb + " already in progress");
+            logger.info("{} already in progress",mVerb);
             writeNack(mVerb + " already in progress");
             mChannel.close();
             return;
@@ -75,22 +80,23 @@ class RestartTask
             restart(mPauseOnly);
         } catch (Exception ex) {
             writeNack(ex.getMessage());
-            Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, ex);
+            logger.error("An exception has occurred", ex);
+            IbcExit.exit(ErrorCodes.UNHANDLED_EXCEPTION);
         }
     }
     
     private void createPauseFlagFile() {
         try {
-        new File(System.getProperty("jtsConfigDir") + 
-                 File.separator + 
-                 "PAUSE" + 
+        new File(System.getProperty("jtsConfigDir") +
+                 File.separator +
+                 "PAUSE" +
                  System.getProperty("ibcsessionid"))
                 .createNewFile();
         } catch (java.io.IOException e) {
             Utils.exitWithException(ErrorCodes.UNHANDLED_EXCEPTION, e);
         }
     }
-    
+
     void restart(final boolean pauseOnly) {
         if (Utils.invokeMenuItem(MainWindowManager.mainWindowManager().getMainWindow(), new String[] {"File", "Restart..."})) {
             mChannel.close();
@@ -114,7 +120,7 @@ class RestartTask
         }
         LocalTime actionTime = now.withHour(newHour).withMinute(newMinute).withSecond(0);
 
-        Utils.logToConsole("Setting auto-restart time to " + actionTime.format(DateTimeFormatter.ofPattern("hh:mm a")));
+        logger.info("Setting auto-restart time to {}", actionTime.format(DateTimeFormatter.ofPattern("hh:mm a")));
         (new ConfigurationTask(new ConfigureAutoLogoffOrRestartTimeTask(
                                         "Auto restart", 
                                         actionTime)
@@ -133,8 +139,8 @@ class RestartTask
         JFrame window = MainWindowManager.mainWindowManager().getMainWindow();
         window.setOpacity(0.80f);
         
-        RestartTask.Countdown countdown = new RestartTask.Countdown(actionTime.isBefore(LocalTime.now()) 
-                                            ? actionTime.atDate(LocalDate.now().plusDays(1)) 
+        RestartTask.Countdown countdown = new RestartTask.Countdown(actionTime.isBefore(LocalTime.now())
+                                            ? actionTime.atDate(LocalDate.now().plusDays(1))
                                             : actionTime.atDate(LocalDate.now()));
         window.setGlassPane(countdown);
         countdown.setVisible(true);
@@ -171,9 +177,9 @@ class RestartTask
             g.setColor(Color.WHITE);
             g.setFont(font);
             if (secsRemaining.isNegative()) {
-                g.drawString(mVerb + " in progress", 50, 300);
+                g.drawString("Restart in progress", 50, 300);
             } else {
-                g.drawString(mVerb + " in " + secsRemaining.getSeconds() + " seconds", 50, 300);
+                g.drawString("Restarting in " + secsRemaining.getSeconds() + " seconds", 50, 300);
             }
         }  
     }

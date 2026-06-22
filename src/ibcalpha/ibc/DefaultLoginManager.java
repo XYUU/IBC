@@ -18,9 +18,14 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.JFrame;
 
 public class DefaultLoginManager extends LoginManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultLoginManager.class);
 
     public DefaultLoginManager() {
         /* don't actually get the credentials yet because the settings 
@@ -95,7 +100,7 @@ public class DefaultLoginManager extends LoginManager {
 
     @Override
     public void logDiagnosticMessage(){
-        Utils.logToConsole("using default login manager: " + message);
+        logger.info("using default login manager: {}", message);
     }
 
     @Override
@@ -185,12 +190,12 @@ public class DefaultLoginManager extends LoginManager {
         if (args.length <= 2) {
             return false;
         }
-        Utils.logError("Incorrect number of arguments passed. quitting...");
-        Utils.logRawToConsole("Number of arguments = " +args.length);
+        logger.error("Incorrect number of arguments passed. quitting...");
+        logger.info("Number of arguments = {}", args.length);
         for (int i = 0; i < args.length; i++) {
-            Utils.logRawToConsole("arg[" + i + "]=" + args[i]);
+            logger.info("arg[{}]={}", i, args[i]);
         }
-        Utils.exitWithError(ErrorCodes.INCORRECT_NUMBER_OF_ARGS);
+        IbcExit.exit(ErrorCodes.INCORRECT_NUMBER_OF_ARGS);
         return false;
     }
 

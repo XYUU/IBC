@@ -18,11 +18,16 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 
 public class RestartConfirmationDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(RestartConfirmationDialogHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -33,14 +38,16 @@ public class RestartConfirmationDialogHandler implements WindowHandler {
     }
 
     public void handleWindow(Window window, int eventID) {
-        if (!SwingUtils.clickButton(window, "Yes")) {
-            Utils.logError("could not ignore shutdown confirmation dialog because we could not find one of the controls.");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (!SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "yes")) {
+            logger.error("could not ignore shutdown confirmation dialog because we could not find one of the controls.");
         }
     }
 
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.findLabel(window, "Are you sure you would like to restart the application") != null);
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 匹配开头 | 相似度: 98.2%
+        return (SwingUtils.findLabelByBundle(window, "ji18n.Language", "Restart_Application") != null);
     }
 }

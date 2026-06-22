@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    implementation project(':')
+}
+
+sourceSets.main.java {
+    setSrcDirs(['src'])
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar', Jar) {
+    archiveBaseName = 'IbcLoader'
+    manifest {
+        attributes('Main-Class': 'ibcloader.IbcLoader')
+    }
+    enabled = false
+}

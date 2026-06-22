@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static ibcalpha.ibc.SwingUtils.findCheckBox;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
@@ -27,6 +30,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class TradesFrameHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(TradesFrameHandler.class);
 
     boolean firstTradesWindowOpened;
 
@@ -55,16 +60,16 @@ public class TradesFrameHandler implements WindowHandler {
         }
         if (eventID == WindowEvent.WINDOW_OPENED) {
             if (findCheckBox(window, "Sun") != null) {
-                Utils.logToConsole("Setting trades log to show all trades");
+                logger.info("Setting trades log to show all trades");
                 // TWS versions before 955
-                SwingUtils.setCheckBoxSelected(window, "Sun", true);
-                SwingUtils.setCheckBoxSelected(window, "Mon", true);
-                SwingUtils.setCheckBoxSelected(window, "Tue", true);
-                SwingUtils.setCheckBoxSelected(window, "Wed", true);
-                SwingUtils.setCheckBoxSelected(window, "Thu", true);
-                SwingUtils.setCheckBoxSelected(window, "Fri", true);
-                SwingUtils.setCheckBoxSelected(window, "Sat", true);
-                SwingUtils.setCheckBoxSelected(window, "All", true);
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Sun");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Mon");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Tue");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Wed");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Thu");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Fri");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "Sat");
+                SwingUtils.findAndSetCheckBoxSelected(window, true, "All");
 
                 monitorAllTradesCheckbox(window, "All");
 
@@ -74,7 +79,7 @@ public class TradesFrameHandler implements WindowHandler {
                     }
                 }
             } else {
-                Utils.logToConsole("IBC can't set Trade History window to show all trades with this TWS version: user must do this");
+                logger.info("IBC can't set Trade History window to show all trades with this TWS version: user must do this");
                 /*
                  * For TWS 955 onwards, IB have replaced the row of daily 
                  * checkboxes with what appears visually to be a combo box:
@@ -96,10 +101,10 @@ public class TradesFrameHandler implements WindowHandler {
             firstTradesWindowOpened = true;
 
         } else if (eventID == WindowEvent.WINDOW_CLOSING) {
-            Utils.logToConsole("User closing trades log");
+            logger.info("User closing trades log");
         } else if (eventID == WindowEvent.WINDOW_CLOSED) {
             if (showAllTrades) {
-                Utils.logToConsole("Trades log closed by user - recreating");
+                logger.info("Trades log closed by user - recreating");
                 Utils.showTradesLogWindow();
             }
         }
@@ -110,7 +115,8 @@ public class TradesFrameHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JFrame))  return false;
 
-        return (SwingUtils.titleContains(window, "Trades"));
+        // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        return (SwingUtils.titleContainsByBundle(window, "ji18n.Language", "Executions"));
     }
 
     private void monitorAllTradesCheckbox(Window window, String text) {
@@ -118,10 +124,10 @@ public class TradesFrameHandler implements WindowHandler {
         if (check != null) check.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent ce) {
-                Utils.logToConsole("Checkbox: " + check.getText() + "; selected=" + check.isSelected());
+                logger.info("Checkbox: {}; selected={}", check.getText(), check.isSelected());
                 if (!check.isSelected()) {
                     GuiDeferredExecutor.instance().execute(() -> {
-                        Utils.logToConsole("Checkbox: " + check.getText() + "; setting selected");
+                        logger.info("Checkbox: {}; setting selected", check.getText());
                         if (!check.isSelected()) check.doClick();
                     });
                 }

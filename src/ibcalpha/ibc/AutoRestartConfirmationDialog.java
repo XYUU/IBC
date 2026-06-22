@@ -18,12 +18,17 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 public class AutoRestartConfirmationDialog implements WindowHandler  {
+
+    private static final Logger logger = LoggerFactory.getLogger(AutoRestartConfirmationDialog.class);
     @Override
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
@@ -36,9 +41,10 @@ public class AutoRestartConfirmationDialog implements WindowHandler  {
 
     @Override
     public void handleWindow(Window window, int eventID) {
-        if (SwingUtils.clickButton(window, "OK")) {
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
         } else {
-            Utils.logError("could not dismiss AutoRestartConfirmation because we could not find one of the controls.");
+            logger.error("could not dismiss AutoRestartConfirmation because we could not find one of the controls.");
         }
     }
 
@@ -46,7 +52,8 @@ public class AutoRestartConfirmationDialog implements WindowHandler  {
     public boolean recogniseWindow(Window window) {
         if (!(window instanceof JDialog)) return false;
 
-        if (SwingUtils.findTextPane(window, "trading platform restart automatically") != null) return true;
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 50.0%
+        if (SwingUtils.findTextPaneByBundle(window, "ji18n.Language", "Enable_auto_restart_warning") != null) return true;
         JOptionPane op = SwingUtils.findOptionPane(window);
         return (op != null && op.getMessage() != null && op.getMessage().toString().contains("trading platform restart automatically"));
     }

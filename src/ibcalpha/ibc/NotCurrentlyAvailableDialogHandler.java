@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
@@ -25,6 +28,8 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 
 class NotCurrentlyAvailableDialogHandler implements WindowHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(NotCurrentlyAvailableDialogHandler.class);
     public boolean filterEvent(Window window, int eventId) {
         switch (eventId) {
             case WindowEvent.WINDOW_OPENED:
@@ -36,14 +41,16 @@ class NotCurrentlyAvailableDialogHandler implements WindowHandler {
     }
 
     public void handleWindow(Window window, int eventID) {
-        if (! SwingUtils.clickButton(window, "OK")) {
-            Utils.logError("The system is not currently available.");
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+        if (! SwingUtils.clickButtonByBundle(window, "twslaunch.ji18n.LauncherLanguage", "OK")) {
+            logger.error("The system is not currently available.");
             return;
         }
 
         if (LoginManager.loginManager().getLoginFrame() != null) {
+            // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 60.0%
             JButton button2 =
-                    SwingUtils.findButton(LoginManager.loginManager().getLoginFrame(), "Login");
+                    SwingUtils.findButtonByBundle(LoginManager.loginManager().getLoginFrame(), "twslaunch.ji18n.LauncherLanguage", "Login");
             button2.requestFocus();
             KeyEvent ke =
                      new KeyEvent(button2, KeyEvent.KEY_PRESSED,
@@ -58,7 +65,9 @@ class NotCurrentlyAvailableDialogHandler implements WindowHandler {
     public boolean recogniseWindow(Window window) {
         if (! (window instanceof JDialog)) return false;
 
-        return (SwingUtils.titleContains(window, "Login") &&
+        // [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 匹配开头 | 相似度: 60.0%
+// [AST重构审查] 来源Jar: jars/twslaunch-1045.jar | 规则: 包含与模糊匹配 | 相似度: 47.8%
+        return (SwingUtils.titleContainsByBundle(window, "twslaunch.ji18n.LauncherLanguage", "Login") &&
                 SwingUtils.findLabel(window, "not currently available") != null);
     }
 }

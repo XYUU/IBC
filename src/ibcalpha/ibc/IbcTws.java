@@ -18,6 +18,9 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.AWTEvent;
 import java.awt.Toolkit;
 import java.io.File;
@@ -206,11 +209,13 @@ import java.util.concurrent.TimeUnit;
 
 public class IbcTws {
 
+    private static final Logger logger = LoggerFactory.getLogger(IbcTws.class);
+
     private IbcTws() { }
 
     public static void main(final String[] args) throws Exception {
         if (Thread.getDefaultUncaughtExceptionHandler() == null) {
-            Thread.setDefaultUncaughtExceptionHandler(new ibcalpha.ibc.UncaughtExceptionHandler());
+            Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
         }
         checkArguments(args);
         setupDefaultEnvironment(args, false);
@@ -253,12 +258,12 @@ public class IbcTws {
          * 
          */
         if (args.length > 6) {
-            Utils.logError("Incorrect number of arguments passed. quitting...");
-            Utils.logRawToConsole("Number of arguments = " +args.length);
+            logger.error("Incorrect number of arguments passed. quitting...");
+            logger.info("Number of arguments = {}", args.length);
             for (String arg : args) {
-                Utils.logRawToConsole(arg);
+                logger.info(arg);
             }
-            Utils.exitWithError(ErrorCodes.INCORRECT_NUMBER_OF_ARGS);
+            IbcExit.exit(ErrorCodes.INCORRECT_NUMBER_OF_ARGS);
         }
     }
 
@@ -288,13 +293,13 @@ public class IbcTws {
                 // an exception with this message can occur if a STOP command is
                 // processed by IBC while TWS/Gateway is still in early stages
                 // of initialisation
-                Utils.exitWithoutError();
+                IbcExit.exit(0);
             }
         }
     }
 
     public static void printVersionInfo() {
-        Utils.logToConsole("version: " + IbcVersionInfo.IBC_VERSION);
+        logger.info("version: {}", IbcVersionInfo.IBC_VERSION);
     }
 
     private static void createToolkitListener() {
@@ -374,8 +379,8 @@ public class IbcTws {
                     cal.add(Calendar.DAY_OF_MONTH, 7);
                 }
             } catch (ParseException e) {
-                Utils.exitWithError(ErrorCodes.INVALID_SETTING_VALUE, 
-                                    "Invalid ColdRestartTime setting: '" + coldRestartTimeSetting + "'; format should be: <hh:mm>   eg 13:00");
+                logger.error("Invalid ColdRestartTime setting: '{}'; format should be: <hh:mm>   eg 13:00", coldRestartTimeSetting);
+                IbcExit.exit(ErrorCodes.INVALID_SETTING_VALUE);
             }
             return cal.getTime();
     }
@@ -421,8 +426,8 @@ public class IbcTws {
                     }
                 }
             } catch (ParseException e) {
-                Utils.exitWithError(ErrorCodes.INVALID_SETTING_VALUE, 
-                                    "Invalid ClosedownAt setting: '" + shutdownTimeSetting + "'; format should be: <[day ]hh:mm>   eg 22:00 or Friday 22:00");
+                logger.error("Invalid ClosedownAt setting: '{}'; format should be: <[day ]hh:mm>   eg 22:00 or Friday 22:00", shutdownTimeSetting);
+                IbcExit.exit(ErrorCodes.INVALID_SETTING_VALUE);
             }
             return cal.getTime();
         }
@@ -437,10 +442,11 @@ public class IbcTws {
         try {
             Files.createDirectories(Paths.get(path));
         } catch (FileAlreadyExistsException ex) {
-            Utils.exitWithError(ErrorCodes.CANT_CREATE_TWS_SETTINGS_DIR, 
-                                "Failed to create TWS settings directory at: " + path + "; a file of that name already exists");
+            logger.error("Failed to create TWS settings directory at: {}; a file of that name already exists", path);
+            IbcExit.exit(ErrorCodes.CANT_CREATE_TWS_SETTINGS_DIR);
         } catch (IOException ex) {
-            Utils.exitWithException(ErrorCodes.CANT_CREATE_TWS_SETTINGS_DIR, ex);
+            logger.error("An exception has occurred", ex);
+            IbcExit.exit(ErrorCodes.CANT_CREATE_TWS_SETTINGS_DIR);
         }
         return path;
     }
@@ -448,8 +454,8 @@ public class IbcTws {
     private static void printProperties() {
         Properties p = System.getProperties();
         Enumeration<Object> i = p.keys();
-        Utils.logRawToConsole("System Properties");
-        Utils.logRawToConsole("------------------------------------------------------------");
+        logger.info("System Properties");
+        logger.info("------------------------------------------------------------");
         while (i.hasMoreElements()) {
             String props = (String) i.nextElement();
             String vals = (String) p.get(props);
@@ -461,20 +467,20 @@ public class IbcTws {
                 }
                 vals = String.join(" ", args);
             }
-            Utils.logRawToConsole(props + " = " + vals);
+            logger.info("{} = {}", props, vals);
         }
-        Utils.logRawToConsole("------------------------------------------------------------");
+        logger.info("------------------------------------------------------------");
     }
 
     private static void startGateway() {
         String[] twsArgs = new String[1];
         twsArgs[0] = getTWSSettingsDirectory();
         try {
-            Utils.logToConsole("Starting Gateway");
+            logger.info("Starting Gateway");
             ibgateway.GWClient.main(twsArgs);
         } catch (Throwable t) {
-            Utils.logException(t);
-            Utils.exitWithError(ErrorCodes.CANT_FIND_ENTRYPOINT);
+            logger.error("An exception has occurred", t);
+            IbcExit.exit(ErrorCodes.CANT_FIND_ENTRYPOINT);
         }
     }
 
@@ -497,9 +503,7 @@ public class IbcTws {
             }
         }
         long delay = shutdownTime.getTime() - System.currentTimeMillis();
-        Utils.logToConsole((SessionManager.isGateway() ? "Gateway" : "TWS") +
-                        " will be " + (isColdRestart ? "cold restarted" : "shut down") + " at " +
-                       (new SimpleDateFormat("yyyy/MM/dd HH:mm")).format(shutdownTime));
+        logger.info("{} will be {} at {}", (SessionManager.isGateway() ? "Gateway" : "TWS"), (isColdRestart ? "cold restarted" : "shut down"), (new SimpleDateFormat("yyyy/MM/dd HH:mm")).format(shutdownTime));
         MyScheduledExecutorService.getInstance().schedule(() -> {
             MyCachedThreadPool.getInstance().execute(new StopTask(null, isColdRestart, "ColdRestartTime setting"));
         }, delay, TimeUnit.MILLISECONDS);
@@ -512,16 +516,16 @@ public class IbcTws {
         String[] twsArgs = new String[1];
         twsArgs[0] = getTWSSettingsDirectory();
         try {
-            Utils.logToConsole("Starting TWS");
+            logger.info("Starting TWS");
             jclient.LoginFrame.main(twsArgs);
         } catch (Throwable t) {
-            Utils.logException(t);
-            Utils.exitWithError(ErrorCodes.CANT_FIND_ENTRYPOINT);
+            logger.error("An exception has occurred", t);
+            IbcExit.exit(ErrorCodes.CANT_FIND_ENTRYPOINT);
         }
     }
 
     private static void startTwsOrGateway() {
-        Utils.logToConsole("TWS Settings directory is: " + getTWSSettingsDirectory());
+        logger.info("TWS Settings directory is: {}", getTWSSettingsDirectory());
         SessionManager.startSession();
         JtsIniManager.initialise(getJtsIniFilePath());
         if (SessionManager.isGateway()) {
@@ -544,7 +548,7 @@ public class IbcTws {
         boolean resetOrderIds = Settings.settings().getBoolean(configName, false);
         if (resetOrderIds) {
             if (SessionManager.isFIX()) {
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
             (new ConfigurationTask(new ConfigureResetOrderIdsTask(resetOrderIds))).executeAsync();
@@ -557,7 +561,7 @@ public class IbcTws {
         int portNumber = Settings.settings().getInt(configName, 0);
         if (portNumber != 0) {
             if (SessionManager.isFIX()){
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
             (new ConfigurationTask(new ConfigureTwsApiPortTask(portNumber))).executeAsync();
@@ -569,7 +573,7 @@ public class IbcTws {
         String masterClientID = Settings.settings().getString(configName, "");
         if (!masterClientID.equals("")) {
             if (SessionManager.isFIX()){
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
             (new ConfigurationTask(new ConfigureTwsMasterClientIDTask(masterClientID))).executeAsync();
@@ -582,14 +586,14 @@ public class IbcTws {
         String autoRestartTime = Settings.settings().getString("AutoRestartTime", "");
         if (autoRestartTime.length() != 0 || autoLogoffTime.length() != 0) {
             if (SessionManager.isFIX()){
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
         }
         if (autoRestartTime.length() != 0) {
             (new ConfigurationTask(new ConfigureAutoLogoffOrRestartTimeTask("Auto restart", autoRestartTime))).executeAsync();
             if (autoLogoffTime.length() != 0) {
-                Utils.logToConsole("AutoLogoffTime is ignored because AutoRestartTime is also set");
+                logger.info("AutoLogoffTime is ignored because AutoRestartTime is also set");
             }
         } else if (autoLogoffTime.length() != 0) {
             (new ConfigurationTask(new ConfigureAutoLogoffOrRestartTimeTask("Auto logoff", autoLogoffTime))).executeAsync();
@@ -600,7 +604,7 @@ public class IbcTws {
         String configName = "ReadOnlyApi";
         if (!Settings.settings().getString(configName, "").equals("")) {
             if (SessionManager.isFIX()){
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
             (new ConfigurationTask(new ConfigureReadOnlyApiTask(Settings.settings().getBoolean(configName,true)))).executeAsync();
@@ -612,7 +616,7 @@ public class IbcTws {
         String sendMarketDataInLots = Settings.settings().getString(configName, "");
         if (!sendMarketDataInLots.equals("")) {
             if (SessionManager.isFIX()){
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
             (new ConfigurationTask(new ConfigureSendMarketDataInLotsForUSstocksTask(Settings.settings().getBoolean(configName, true)))).executeAsync();
@@ -642,7 +646,7 @@ public class IbcTws {
                 !bypassRedirectOrderWarning.equals("") ||
                 !bypassNoOverfillProtectionPrecaution.equals("")) {
             if (SessionManager.isFIX()){
-                Utils.logToConsole(configName + " - ignored for FIX");
+                logger.info("{} - ignored for FIX", configName);
                 return;
             }
             (new ConfigurationTask(new ConfigureApiPrecautionsTask(

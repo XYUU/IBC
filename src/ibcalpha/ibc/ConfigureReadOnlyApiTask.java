@@ -18,10 +18,15 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 
 public class ConfigureReadOnlyApiTask implements ConfigurationAction{
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigureReadOnlyApiTask.class);
 
     private final boolean readOnlyApi;
     private JDialog configDialog;
@@ -33,30 +38,32 @@ public class ConfigureReadOnlyApiTask implements ConfigurationAction{
     @Override
     public void run() {
         try {
-            Utils.logToConsole("Setting ReadOnlyApi");
+            logger.info("Setting ReadOnlyApi");
 
             Utils.selectApiSettings(configDialog);
 
-            JCheckBox readOnlyApiCheckbox = SwingUtils.findCheckBox(configDialog, "Read-Only API");
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            JCheckBox readOnlyApiCheckbox = SwingUtils.findCheckBoxByBundle(configDialog, "ji18n.Language", "Api_Enable_ReadOnly");
             if (readOnlyApiCheckbox == null) {
                 // NB: we don't throw here because older TWS versions did not have this setting
-                Utils.logError("could not find Read-Only API checkbox");
+                logger.error("could not find Read-Only API checkbox");
                 return;
             }
 
             if (readOnlyApiCheckbox.isSelected() == readOnlyApi) {
-                Utils.logToConsole("Read-Only API checkbox is already set to: " + readOnlyApi);
+                logger.info("Read-Only API checkbox is already set to: {}", readOnlyApi);
             } else {
                 if (!SessionManager.isGateway()) {
-                    JCheckBox cb = SwingUtils.findCheckBox(configDialog, "Enable ActiveX and Socket Clients");
+                    // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+                    JCheckBox cb = SwingUtils.findCheckBoxByBundle(configDialog, "ji18n.Language", "Conf_Item_23_Txt");
                     if (cb == null) throw new IbcException("could not find Enable ActiveX checkbox");
                     if (cb.isSelected()) ConfigDialogManager.configDialogManager().setApiConfigChangeConfirmationExpected();
                 }
                 readOnlyApiCheckbox.setSelected(readOnlyApi);
-                Utils.logToConsole("Read-Only API checkbox is now set to: " + readOnlyApi);
+                logger.info("Read-Only API checkbox is now set to: {}", readOnlyApi);
             }
         } catch (IbcException e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         }
     }
 

@@ -23,10 +23,15 @@
 
 package ibcalpha.ibc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 
 public class ConfigureSendMarketDataInLotsForUSstocksTask implements ConfigurationAction{
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigureSendMarketDataInLotsForUSstocksTask.class);
 
     private final boolean sendMarketDataInLots;
     private JDialog configDialog;
@@ -38,25 +43,26 @@ public class ConfigureSendMarketDataInLotsForUSstocksTask implements Configurati
     @Override
     public void run() {
         try {
-            Utils.logToConsole("Setting Send Market Data In Lots");
+            logger.info("Setting Send Market Data In Lots");
 
             Utils.selectApiSettings(configDialog);
 
-            JCheckBox sendMarketDataInLotsCheckbox = SwingUtils.findCheckBox(configDialog, "Send market data in lots for US stocks for dual-mode API clients");
+            // [AST重构审查] 来源Jar: jars/jts4launch-1045.jar | 规则: 完全匹配(区分大小写) | 相似度: 100.0%
+            JCheckBox sendMarketDataInLotsCheckbox = SwingUtils.findCheckBoxByBundle(configDialog, "ji18n.Language", "Num_results_in_product_type");
             if (sendMarketDataInLotsCheckbox == null) {
                 // NB: we don't throw here because older TWS versions did not have this setting
-                Utils.logError("could not find Send Market Data In Lots checkbox");
+                logger.error("could not find Send Market Data In Lots checkbox");
                 return;
             }
 
             if (sendMarketDataInLotsCheckbox.isSelected() == sendMarketDataInLots) {
-                Utils.logToConsole("Send Market Data In Lots checkbox is already set to: " + sendMarketDataInLots);
+                logger.info("Send Market Data In Lots checkbox is already set to: {}", sendMarketDataInLots);
             } else {
                 sendMarketDataInLotsCheckbox.setSelected(sendMarketDataInLots);
-                Utils.logToConsole("Send Market Data In Lots checkbox is now set to: " + sendMarketDataInLots);
+                logger.info("Send Market Data In Lots checkbox is now set to: {}", sendMarketDataInLots);
             }
         } catch (IbcException e) {
-            Utils.logException(e);
+            logger.error("An exception has occurred", e);
         }
     }
 
